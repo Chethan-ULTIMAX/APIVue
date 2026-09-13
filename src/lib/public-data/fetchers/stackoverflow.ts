@@ -1,12 +1,11 @@
 /**
  * Stack Overflow public profile fetcher.
+ *
+ * The public Stack Exchange API identifies users by numeric user id. Explore
+ * accepts either that id or a normal Stack Overflow /users/<id>/... URL.
  */
 
 const STACKEXCHANGE_API = 'https://api.stackexchange.com/2.3';
-
-/* ============================================================
- * Raw types
- * ============================================================ */
 
 export interface RawStackOverflowUser {
   user_id: number;
@@ -15,11 +14,7 @@ export interface RawStackOverflowUser {
   link?: string;
   location?: string;
   reputation: number;
-  badge_counts: {
-    gold: number;
-    silver: number;
-    bronze: number;
-  };
+  badge_counts: { gold: number; silver: number; bronze: number };
   answer_count?: number;
   question_count?: number;
   up_vote_count?: number;
@@ -39,56 +34,44 @@ export interface RawStackOverflowProfile {
   tags: RawStackOverflowTag[];
 }
 
-/* ============================================================
- * HTTP helper
- * ============================================================ */
-
 interface StackExchangeEnvelope<T> {
   items: T[];
+  error_id?: number;
+  error_message?: string;
 }
 
 async function stackExchangeRequest<T>(path: string): Promise<T[]> {
   const response = await fetch(`${STACKEXCHANGE_API}${path}`);
-
-  if (!response.ok) {
-    if (response.status === 400 || response.status === 404) {
-      throw new Error('Stack Overflow user not found.');
-    }
-    throw new Error(
-      `Stack Overflow request failed with status ${response.status}.`,
-    );
-  }
-
   const payload = (await response.json()) as StackExchangeEnvelope<T>;
+
+  if (!response.ok || payload.error_id) {
+    if (response.status === 400 || response.status === 404) throw new Error('Stack Overflow user not found.');
+    throw new Error(payload.error_message ?? `Stack Overflow request failed with status ${response.status}.`);
+  }
   return payload.items ?? [];
 }
 
-/* ============================================================
- * Public API
- * ============================================================ */
-
-export async function fetchStackOverflowPublicProfile(
-  userId: string,
-): Promise<RawStackOverflowProfile> {
-  const cleanUserId = userId.replace(/[^0-9]/g, '').trim();
-
-  if (!cleanUserId) {
-    throw new Error('Enter a Stack Overflow user ID (numeric).');
+function extractUserId(input: string): string {
+  const value = input.trim();
+  if (/^\d+$/.test(value)) return value;
+  try {
+    const url = new URL(value);
+    const match = url.pathname.match(/\/users\/(\d+)/i);
+    if (match?.[1]) return match[1];
+  } catch {
+    // Fall through to the friendly validation error.
   }
+  throw new Error('Stack Overflow needs a numeric user ID or a Stack Overflow profile URL.');
+}
 
+export async function fetchStackOverflowPublicProfile(input: string): Promise<RawStackOverflowProfile> {
+  const userId = extractUserId(input);
   const [userItems, tagItems] = await Promise.all([
-    stackExchangeRequest<RawStackOverflowUser>(
-      `/users/${cleanUserId}?site=stackoverflow&filter=default`,
-    ),
-    stackExchangeRequest<RawStackOverflowTag>(
-      `/users/${cleanUserId}/top-answer-tags?site=stackoverflow&pagesize=10`,
-    ).catch(() => [] as RawStackOverflowTag[]),
+    stackExchangeRequest<RawStackOverflowUser>(`/users/${userId}?site=stackoverflow&filter=default`),
+    stackExchangeRequest<RawStackOverflowTag>(`/users/${userId}/top-answer-tags?site=stackoverflow&pagesize=10`).catch(() => [] as RawStackOverflowTag[]),
   ]);
 
   const user = userItems[0];
-  if (!user) {
-    throw new Error('Stack Overflow user not found.');
-  }
-
+  if (!user) throw new Error('Stack Overflow user not found.');
   return { user, tags: tagItems };
 }
