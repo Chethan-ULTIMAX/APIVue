@@ -40,13 +40,28 @@ async function syncStackOverflowProfile(handle: string): Promise<SyncProfile> {
   return payload.profile;
 }
 
-export async function connectPublicProfile(platform: 'leetcode' | 'codewars' | 'stackoverflow', handle: string): Promise<SyncProfile> {
+async function syncSecurityPublicProfile(platform: 'tryhackme' | 'hackthebox', handle: string): Promise<SyncProfile> {
+  const clean = handle.trim();
+  if (!clean) throw new Error(`${platform === 'tryhackme' ? 'TryHackMe username' : 'HTB public profile URL or ID'} is required.`);
+  const confirmed = window.confirm(`Track this public ${platform === 'tryhackme' ? 'TryHackMe' : 'Hack The Box'} profile?\n\n${clean}\n\nAPIVue will only use data exposed by the platform's public profile surface. No password, session cookie, or private token is requested.`);
+  if (!confirmed) throw new Error('Profile addition cancelled.');
+  const { data, error } = await supabase.functions.invoke('sync-security-profile', { body: { platform, handle: clean, save: true } });
+  if (error) { let message = error.message; const context = (error as { context?: { json?: () => Promise<unknown> } }).context; if (context?.json) { try { const body = await context.json() as { error?: string }; if (body?.error) message = body.error; } catch {} } throw new Error(message); }
+  const payload = data as { error?: string; profile?: SyncProfile };
+  if (payload.error) throw new Error(payload.error);
+  if (!payload.profile) throw new Error('Security profile sync returned no profile data.');
+  return payload.profile;
+}
+
+export async function connectPublicProfile(platform: 'leetcode' | 'codewars' | 'stackoverflow' | 'tryhackme' | 'hackthebox', handle: string): Promise<SyncProfile> {
   const clean = handle.trim().replace(/^@/, '');
-  if (!clean) throw new Error('A username, user ID, or profile URL is required.');
-  const provider = platform === 'leetcode' ? 'LeetCode' : platform === 'codewars' ? 'Codewars' : 'Stack Overflow';
+  if (!clean) throw new Error('A username, user ID, or public profile URL is required.');
+  if (platform === 'stackoverflow') return syncStackOverflowProfile(clean);
+  if (platform === 'tryhackme' || platform === 'hackthebox') return syncSecurityPublicProfile(platform, clean);
+  const provider = platform === 'leetcode' ? 'LeetCode' : 'Codewars';
   const confirmed = window.confirm(`Track this public ${provider} profile?\n\n${clean}\n\nAPIVue will load publicly available data and add it to your tracked profiles. No ownership verification is required.`);
   if (!confirmed) throw new Error('Profile addition cancelled.');
-  return platform === 'stackoverflow' ? syncStackOverflowProfile(clean) : syncPublicProfile(platform, clean);
+  return syncPublicProfile(platform, clean);
 }
 
 async function invokeOAuth(functionName: string, provider: string, body: Record<string, unknown> = {}): Promise<void> {
@@ -68,7 +83,7 @@ export async function getIntegrationStatus(): Promise<IntegrationStatus> {
   if (API_BASE) { try { return await backendRequest<IntegrationStatus>('/api/integrations'); } catch {} }
   const { data, error } = await supabase.from('tracked_profiles').select('platform,handle,display_name,avatar_url,profile_url,last_synced_at,data').order('last_synced_at', { ascending: false });
   if (error) throw new Error(error.message);
-  const status: IntegrationStatus = { github: { connected: false }, codeforces: { connected: false }, leetcode: { connected: false }, codewars: { connected: false }, stackoverflow: { connected: false } };
+  const status: IntegrationStatus = { github: { connected: false }, codeforces: { connected: false }, leetcode: { connected: false }, codewars: { connected: false }, stackoverflow: { connected: false }, tryhackme: { connected: false }, hackthebox: { connected: false } };
   for (const row of data ?? []) { const id = row.platform as IntegrationId; if (!(id in status) || status[id].connected) continue; const payload = row.data as Record<string, unknown> | null; const privateAccess = payload?.privateAccess === true || payload?.private_access === true; const repoCount = typeof payload?.accessibleRepoCount === 'number' ? payload.accessibleRepoCount : typeof payload?.accessible_repo_count === 'number' ? payload.accessible_repo_count : undefined; const ownershipVerified = payload?.ownershipVerified === true || payload?.ownership_verified === true; status[id] = { connected: true, username: row.handle, handle: row.handle, displayName: row.display_name, avatarUrl: row.avatar_url, profileUrl: row.profile_url ?? undefined, lastSyncedAt: row.last_synced_at ?? undefined, privateAccess, accessibleRepoCount: repoCount, ownershipVerified, verificationMethod: typeof payload?.verificationMethod === 'string' ? payload.verificationMethod : undefined }; }
   return status;
 }
@@ -78,11 +93,13 @@ export async function connectCodeforces(_handle?: string): Promise<void> { await
 export async function connectStackOverflow(handle: string): Promise<void> { await connectPublicProfile('stackoverflow', handle); }
 export async function disconnectGitHub(): Promise<void> { await disconnectPublicProfile('github'); }
 export async function syncGitHub(): Promise<GitHubPrivateSync> { const { data, error } = await supabase.functions.invoke('sync-github-private', { body: {} }); if (error) throw new Error(error.message); const payload = data as Partial<GitHubPrivateSync> & { error?: string }; if (payload.error) throw new Error(payload.error); if (!payload.syncedAt || !payload.username) throw new Error('GitHub sync returned an incomplete result.'); return payload as GitHubPrivateSync; }
-export async function syncIntegration(provider: Exclude<IntegrationId, 'github'>): Promise<{ syncedAt: string; handle: string; provider: string }> { const status = await getIntegrationStatus(); const handle = status[provider].username ?? status[provider].handle; if (!handle) throw new Error(`${provider} is not connected.`); const profile = provider === 'stackoverflow' ? await syncStackOverflowProfile(handle) : await syncPublicProfile(provider, handle); return { syncedAt: profile.lastSyncedAt ?? profile.last_synced_at ?? new Date().toISOString(), handle: profile.handle, provider }; }
+export async function syncIntegration(provider: Exclude<IntegrationId, 'github'>): Promise<{ syncedAt: string; handle: string; provider: string }> { const status = await getIntegrationStatus(); const handle = status[provider].username ?? status[provider].handle; if (!handle) throw new Error(`${provider} is not connected.`); const profile = provider === 'stackoverflow' ? await syncStackOverflowProfile(handle) : provider === 'tryhackme' || provider === 'hackthebox' ? await syncSecurityPublicProfile(provider, handle) : await syncPublicProfile(provider, handle); return { syncedAt: profile.lastSyncedAt ?? profile.last_synced_at ?? new Date().toISOString(), handle: profile.handle, provider }; }
 export async function disconnectCodeforces(): Promise<void> { await disconnectPublicProfile('codeforces'); }
 export async function connectLeetCode(handle: string): Promise<void> { await connectPublicProfile('leetcode', handle); }
 export async function disconnectLeetCode(): Promise<void> { await disconnectPublicProfile('leetcode'); }
 export async function connectCodewars(handle: string): Promise<void> { await connectPublicProfile('codewars', handle); }
 export async function disconnectCodewars(): Promise<void> { await disconnectPublicProfile('codewars'); }
 export async function disconnectStackOverflow(): Promise<void> { await disconnectPublicProfile('stackoverflow'); }
+export async function disconnectTryHackMe(): Promise<void> { await disconnectPublicProfile('tryhackme'); }
+export async function disconnectHackTheBox(): Promise<void> { await disconnectPublicProfile('hackthebox'); }
 async function disconnectPublicProfile(provider: IntegrationId): Promise<void> { const { data, error } = await supabase.from('tracked_profiles').select('id').eq('platform', provider).limit(1); if (error) throw new Error(error.message); const id = data?.[0]?.id; if (!id) return; const { error: deleteError } = await supabase.from('tracked_profiles').delete().eq('id', id); if (deleteError) throw new Error(deleteError.message); }
