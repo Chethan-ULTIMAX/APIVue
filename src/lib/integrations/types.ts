@@ -1,7 +1,7 @@
 /** Shared integration types. */
 import type { LucideIcon } from 'lucide-react';
 export type IntegrationId = 'github' | 'codeforces' | 'leetcode' | 'codewars' | 'stackoverflow';
-export type CategoryId = 'development' | 'competitive-programming' | 'learning' | 'activity' | 'goals';
+export type CategoryId = 'development' | 'competitive-programming' | 'security' | 'learning' | 'activity' | 'goals';
 export interface ConnectedAccount { connected: boolean; username?: string; handle?: string; displayName?: string | null; avatarUrl?: string | null; profileUrl?: string; connectedAt?: string; lastSyncedAt?: string; error?: string; privateAccess?: boolean; accessibleRepoCount?: number; ownershipVerified?: boolean; verificationMethod?: string; }
 export type IntegrationStatus = Record<IntegrationId, ConnectedAccount>;
 export interface CategoryDefinition { id: CategoryId; label: string; description: string; }
