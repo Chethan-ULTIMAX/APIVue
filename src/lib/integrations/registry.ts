@@ -13,6 +13,7 @@ export type {
 export const categories: CategoryDefinition[] = [
   { id: 'development', label: 'Development', description: 'Software development and coding activity.' },
   { id: 'competitive-programming', label: 'Competitive Programming', description: 'Problem solving, contests, ratings and submissions.' },
+  { id: 'security', label: 'Cybersecurity', description: 'Security labs, challenges and defensive/offensive security learning activity.' },
   { id: 'learning', label: 'Learning', description: 'Learning and educational activity.' },
   { id: 'activity', label: 'Activity', description: 'General activity and consistency over time.' },
   { id: 'goals', label: 'Goals', description: 'Personal goals and progress toward goals.' },
