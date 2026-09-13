@@ -1,11 +1,4 @@
-/**
- * Stack Overflow public profile fetcher.
- *
- * The public Stack Exchange API identifies users by numeric user id. Explore
- * accepts either that id or a normal Stack Overflow /users/<id>/... URL.
- */
-
-const STACKEXCHANGE_API = 'https://api.stackexchange.com/2.3';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface RawStackOverflowUser {
   user_id: number;
@@ -34,54 +27,35 @@ export interface RawStackOverflowProfile {
   tags: RawStackOverflowTag[];
 }
 
-interface StackExchangeEnvelope<T> {
-  items: T[];
-  error_id?: number;
-  error_message?: string;
-}
-
-async function stackExchangeRequest<T>(path: string): Promise<T[]> {
-  const response = await fetch(`${STACKEXCHANGE_API}${path}`);
-  const payload = (await response.json()) as StackExchangeEnvelope<T>;
-
-  if (!response.ok || payload.error_id) {
-    if (response.status === 400 || response.status === 404) {
-      throw new Error('Stack Overflow user not found.');
-    }
-    throw new Error(payload.error_message ?? `Stack Overflow request failed with status ${response.status}.`);
-  }
-
-  return payload.items ?? [];
-}
-
 function extractUserId(input: string): string {
   const value = input.trim();
   if (/^\d+$/.test(value)) return value;
-
   try {
     const url = new URL(value);
     const match = url.pathname.match(/\/users\/(\d+)/i);
     if (match?.[1]) return match[1];
-  } catch {
-    // Fall through to the friendly validation error.
-  }
-
+  } catch {}
   throw new Error('Stack Overflow needs a numeric user ID or a Stack Overflow profile URL.');
 }
 
 export async function fetchStackOverflowPublicProfile(input: string): Promise<RawStackOverflowProfile> {
   const userId = extractUserId(input);
-  const [userItems, tagItems] = await Promise.all([
-    // Do not add filter=default here. The documented public endpoint without a
-    // filter returns the same user envelope used by Stack Overflow itself.
-    stackExchangeRequest<RawStackOverflowUser>(`/users/${userId}?site=stackoverflow`),
-    stackExchangeRequest<RawStackOverflowTag>(`/users/${userId}/top-answer-tags?site=stackoverflow&pagesize=10`).catch(
-      () => [] as RawStackOverflowTag[],
-    ),
-  ]);
-
-  const user = userItems.find((item) => item.user_id === Number(userId));
-  if (!user) throw new Error('Stack Overflow user not found.');
-
-  return { user, tags: tagItems };
+  const { data, error } = await supabase.functions.invoke('public-profile', {
+    body: { provider: 'stackoverflow', handle: userId },
+  });
+  if (error) {
+    let message = error.message;
+    const context = (error as { context?: { json?: () => Promise<unknown> } }).context;
+    if (context?.json) {
+      try {
+        const body = await context.json() as { error?: string };
+        if (body?.error) message = body.error;
+      } catch {}
+    }
+    throw new Error(message || 'Stack Overflow public data request failed.');
+  }
+  const payload = data as { error?: string; data?: RawStackOverflowProfile } | null;
+  if (payload?.error) throw new Error(payload.error);
+  if (!payload?.data?.user) throw new Error(`Stack Overflow user "${userId}" not found.`);
+  return payload.data;
 }
