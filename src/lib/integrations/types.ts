@@ -11,8 +11,15 @@ export interface Metric { key: string; label: string; value: string | number; ch
 export interface RatingHistoryPoint { date: string; value: number; }
 export interface ProfileHighlight { title: string; url?: string; subtitle?: string; }
 export interface ProfileBreakdown { key: string; label: string; unit?: string; items: Array<{ label: string; value: number }>; }
-export interface GitHubRepository { id?: number; name: string; url: string; html_url?: string; private?: boolean; description?: string | null; language?: string | null; stars?: number; forks?: number; stargazers_count?: number; forks_count?: number; updatedAt?: string | null; updated_at?: string | null; }
-export interface ProfileData { bio?: string; location?: string; joinedAt?: string; metrics?: Metric[]; activity?: Array<{ date: string; count: number }>; ratingHistory?: RatingHistoryPoint[]; highlights?: ProfileHighlight[]; breakdowns?: ProfileBreakdown[]; privateAccess?: boolean; accessibleRepoCount?: number; privateRepoCount?: number; repositories?: GitHubRepository[]; publicRepositories?: GitHubRepository[]; privateRepositories?: GitHubRepository[]; ownershipVerified?: boolean; verificationMethod?: string; verificationVerifiedAt?: string; }
+export interface GitHubRepository { id?: number; name: string; url: string; html_url?: string; private?: boolean; description?: string | null; language?: string | null; stars?: number; forks?: number; stargazers_count?: number; forks_count?: number; open_issues_count?: number; updatedAt?: string | null; updated_at?: string | null; }
+export interface ProfileData {
+  bio?: string; location?: string; joinedAt?: string;
+  metrics?: Metric[]; activity?: Array<{ date: string; count: number; label?: string; type?: string }>;
+  ratingHistory?: RatingHistoryPoint[]; highlights?: ProfileHighlight[]; breakdowns?: ProfileBreakdown[];
+  privateAccess?: boolean; accessibleRepoCount?: number; privateRepoCount?: number;
+  repositories?: GitHubRepository[]; publicRepositories?: GitHubRepository[]; privateRepositories?: GitHubRepository[];
+  ownershipVerified?: boolean; verificationMethod?: string; verificationVerifiedAt?: string;
+}
 export interface TrackedProfile { id: string; platform: IntegrationId | string; username?: string; handle: string; displayName?: string; display_name?: string; avatarUrl?: string | null; avatar_url?: string | null; profileUrl?: string; profile_url?: string; pinned?: boolean; lastSyncedAt?: string; last_synced_at?: string; syncError?: string; sync_error?: string; data?: ProfileData; }
 export type NormalizedProfile = TrackedProfile;
 export interface ProfileSnapshot { id: string; profile_id: string; captured_at: string; metrics: Record<string, number>; }

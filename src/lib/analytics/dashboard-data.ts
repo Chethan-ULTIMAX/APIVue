@@ -1,85 +1,18 @@
 import type { ProfileSnapshot, TrackedProfile } from '@/lib/integrations/registry';
-
-export interface DashboardMetric {
-  key: string;
-  label: string;
-  value: number;
-  platform: string;
-}
-
-export interface ActivityPoint {
-  date: string;
-  count: number;
-}
-
-export function numericMetrics(profile: TrackedProfile): DashboardMetric[] {
-  return (profile.data?.metrics ?? [])
-    .filter((metric) => typeof metric.value === 'number' && Number.isFinite(metric.value))
-    .map((metric) => ({
-      key: metric.key,
-      label: metric.label,
-      value: Number(metric.value),
-      platform: profile.platform,
-    }));
-}
-
-export function profileMetric(profile: TrackedProfile, key: string) {
-  return (profile.data?.metrics ?? []).find((metric) => metric.key === key);
-}
-
-export function allActivity(profiles: TrackedProfile[]): ActivityPoint[] {
-  const byDay = new Map<string, number>();
-  for (const profile of profiles) {
-    for (const item of profile.data?.activity ?? []) {
-      if (!item.date) continue;
-      byDay.set(item.date, (byDay.get(item.date) ?? 0) + Math.max(0, Number(item.count) || 0));
-    }
-  }
-  return Array.from(byDay, ([date, count]) => ({ date, count })).sort((a, b) => a.date.localeCompare(b.date));
-}
-
-export function recentActivity(profiles: TrackedProfile[], limit = 8) {
-  return profiles
-    .flatMap((profile) =>
-      (profile.data?.activity ?? []).map((item) => ({
-        ...item,
-        platform: profile.platform,
-        handle: profile.handle,
-        displayName: profile.displayName ?? profile.handle,
-      })),
-    )
-    .filter((item) => item.date)
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, limit);
-}
-
-export function snapshotDelta(snapshots: ProfileSnapshot[], profileId: string, key: string) {
-  const history = snapshots
-    .filter((snapshot) => snapshot.profile_id === profileId && typeof snapshot.metrics?.[key] === 'number')
-    .sort((a, b) => a.captured_at.localeCompare(b.captured_at));
-  if (history.length < 2) return null;
-  const first = Number(history[0].metrics[key]);
-  const last = Number(history[history.length - 1].metrics[key]);
-  if (!Number.isFinite(first) || !Number.isFinite(last)) return null;
-  return { first, last, delta: last - first };
-}
-
-export function formatNumber(value: number) {
-  return Number(value).toLocaleString();
-}
-
-export function formatRelativeDate(value: string) {
-  const date = new Date(value.length === 10 ? `${value}T00:00:00` : value);
-  if (Number.isNaN(date.getTime())) return value;
-  const diff = Date.now() - date.getTime();
-  const days = Math.floor(diff / 86400000);
-  if (days <= 0) return 'today';
-  if (days === 1) return 'yesterday';
-  if (days < 7) return `${days}d ago`;
-  if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
-export function platformLabel(platform: string) {
-  return platform === 'stackoverflow' ? 'Stack Overflow' : platform.charAt(0).toUpperCase() + platform.slice(1);
-}
+export interface DashboardMetric { key:string; label:string; value:number; platform:string; }
+export interface ActivityPoint { date:string; count:number; }
+function githubDerived(profile:TrackedProfile):DashboardMetric[]{ if(profile.platform!=='github')return[]; const repos=profile.data?.repositories??[]; const stars=repos.reduce((s,r)=>s+Number(r.stargazers_count??r.stars??0),0); const forks=repos.reduce((s,r)=>s+Number(r.forks_count??r.forks??0),0); const issues=repos.reduce((s,r)=>s+Number(r.open_issues_count??0),0); return [{key:'repository_total',label:'Repositories',value:repos.length,platform:'github'},{key:'stars_total',label:'Stars',value:stars,platform:'github'},{key:'forks_total',label:'Forks',value:forks,platform:'github'},{key:'open_issues_total',label:'Open issues & PRs',value:issues,platform:'github'}]; }
+export function numericMetrics(profile:TrackedProfile):DashboardMetric[]{ const stored=(profile.data?.metrics??[]).filter(m=>typeof m.value==='number'&&Number.isFinite(m.value)).map(m=>({key:m.key,label:m.label,value:Number(m.value),platform:profile.platform})); if(stored.length)return stored; return githubDerived(profile); }
+export function profileMetric(profile:TrackedProfile,key:string){return (profile.data?.metrics??[]).find(m=>m.key===key)??githubDerived(profile).find(m=>m.key===key);}
+export function activityTotal(profile:TrackedProfile){return (profile.data?.activity??[]).reduce((s,p)=>s+Math.max(0,Number(p.count)||0),0);}
+export function allActivity(profiles:TrackedProfile[]):ActivityPoint[]{const byDay=new Map<string,number>();for(const profile of profiles)for(const item of profile.data?.activity??[])if(item.date)byDay.set(item.date,(byDay.get(item.date)??0)+Math.max(0,Number(item.count)||0));return Array.from(byDay,([date,count])=>({date,count})).sort((a,b)=>a.date.localeCompare(b.date));}
+export function recentActivity(profiles:TrackedProfile[],limit=8){return profiles.flatMap(profile=>(profile.data?.activity??[]).map(item=>({...item,platform:profile.platform,handle:profile.handle,displayName:profile.displayName??profile.handle}))).filter(item=>item.date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,limit);}
+export function snapshotDelta(snapshots:ProfileSnapshot[],profileId:string,key:string){const history=snapshots.filter(s=>s.profile_id===profileId&&typeof s.metrics?.[key]==='number').sort((a,b)=>a.captured_at.localeCompare(b.captured_at));if(history.length<2)return null;const first=Number(history[0].metrics[key]),last=Number(history[history.length-1].metrics[key]);return Number.isFinite(first)&&Number.isFinite(last)?{first,last,delta:last-first}:null;}
+export function formatNumber(value:number){return Number(value).toLocaleString();}
+export function formatCompact(value:number){return Intl.NumberFormat(undefined,{notation:'compact',maximumFractionDigits:1}).format(value);}
+export function formatRelativeDate(value:string){const date=new Date(value.length===10?`${value}T00:00:00`:value);if(Number.isNaN(date.getTime()))return value;const days=Math.floor((Date.now()-date.getTime())/86400000);if(days<=0)return'today';if(days===1)return'yesterday';if(days<7)return`${days}d ago`;if(days<30)return`${Math.floor(days/7)}w ago`;return date.toLocaleDateString(undefined,{month:'short',day:'numeric'});}
+export function platformLabel(platform:string){return platform==='stackoverflow'?'Stack Overflow':platform.charAt(0).toUpperCase()+platform.slice(1);}
+export function platformTone(platform:string){if(platform==='github')return{bg:'bg-slate-900/10 dark:bg-white/10',text:'text-slate-800 dark:text-white',ring:'ring-slate-400/30',chart:'hsl(220 14% 45%)'};if(platform==='leetcode')return{bg:'bg-amber-500/10',text:'text-amber-600 dark:text-amber-400',ring:'ring-amber-500/30',chart:'hsl(38 92% 50%)'};if(platform==='codeforces')return{bg:'bg-sky-500/10',text:'text-sky-600 dark:text-sky-400',ring:'ring-sky-500/30',chart:'hsl(199 89% 48%)'};if(platform==='codewars')return{bg:'bg-red-500/10',text:'text-red-600 dark:text-red-400',ring:'ring-red-500/30',chart:'hsl(0 72% 51%)'};return{bg:'bg-violet-500/10',text:'text-violet-600 dark:text-violet-400',ring:'ring-violet-500/30',chart:'hsl(262 83% 58%)'};}
+export function topMetrics(profile:TrackedProfile,count=6){return numericMetrics(profile).slice(0,count);}
+export function totalMetricValue(profile:TrackedProfile){return numericMetrics(profile).reduce((sum,m)=>sum+Math.max(0,m.value),0);}
+export function sharedNumericMetrics(profiles:TrackedProfile[]){const map=new Map<string,{key:string;label:string;hits:number}>();profiles.forEach(p=>numericMetrics(p).forEach(m=>{const current=map.get(m.key);map.set(m.key,{key:m.key,label:m.label,hits:(current?.hits??0)+1});}));return Array.from(map.values()).filter(m=>m.hits===profiles.length);}
