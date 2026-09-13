@@ -1,0 +1,15 @@
+/* APIVue profile polish: scroll reveal, centered real avatars, readable analytics labels. */
+.cp-reveal{animation:apivue-scroll-in .7s ease both}
+@keyframes apivue-scroll-in{from{opacity:.2;transform:translateY(28px)}to{opacity:1;transform:none}}
+@supports (animation-timeline:view()){.cp-reveal{animation-timeline:view(block 0% 18%);animation-range:entry 0% cover 22%}}
+.com-card,.com-profile,.com-stat,.com-insight{transition:transform .35s ease,box-shadow .35s ease}
+.com-avatar,.cp-avatar{display:grid;place-items:center;overflow:hidden}
+.com-avatar img,.cp-avatar img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 50%;transform:none}
+.cp-weekdays{display:grid;grid-template-columns:repeat(7,11px);gap:3px;margin:0 0 5px 0;color:hsl(var(--muted-foreground));font-size:9px;text-align:center}
+.cp-weekdays span{width:11px}
+.cp-heatmap-monday{grid-template-rows:repeat(7,11px);grid-auto-flow:column;grid-template-columns:repeat(53,11px)}
+.cp-heatmap-note{margin-top:7px;font-size:10px;color:hsl(var(--muted-foreground))}
+.cp-bar>span{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:hsl(var(--foreground))}
+.cp-chart-dot{cursor:help}
+.com-line,.com-dot{cursor:help}
+@media(prefers-reduced-motion:reduce){.cp-reveal{animation:none!important;opacity:1;transform:none}}
