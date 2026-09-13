@@ -45,12 +45,7 @@ async function syncSecurityPublicProfile(platform: 'tryhackme' | 'hackthebox', h
   if (!clean) throw new Error(`${platform === 'tryhackme' ? 'TryHackMe username' : 'HTB public profile URL or ID'} is required.`);
   const confirmed = window.confirm(`Track this public ${platform === 'tryhackme' ? 'TryHackMe' : 'Hack The Box'} profile?\n\n${clean}\n\nAPIVue will only use data exposed by the platform's public profile surface. No password, session cookie, or private token is requested.`);
   if (!confirmed) throw new Error('Profile addition cancelled.');
-  const { data, error } = await supabase.functions.invoke('sync-security-profile', { body: { platform, handle: clean, save: true } });
-  if (error) { let message = error.message; const context = (error as { context?: { json?: () => Promise<unknown> } }).context; if (context?.json) { try { const body = await context.json() as { error?: string }; if (body?.error) message = body.error; } catch {} } throw new Error(message); }
-  const payload = data as { error?: string; profile?: SyncProfile };
-  if (payload.error) throw new Error(payload.error);
-  if (!payload.profile) throw new Error('Security profile sync returned no profile data.');
-  return payload.profile;
+  return syncPublicProfile(platform, clean);
 }
 
 export async function connectPublicProfile(platform: 'leetcode' | 'codewars' | 'stackoverflow' | 'tryhackme' | 'hackthebox', handle: string): Promise<SyncProfile> {
