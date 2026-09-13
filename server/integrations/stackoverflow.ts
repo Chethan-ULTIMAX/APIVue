@@ -21,6 +21,16 @@ interface StackOverflowTag {
   answer_score: number;
 }
 
+interface StackExchangeResponse<T> {
+  items?: T[];
+  has_more?: boolean;
+  quota_max?: number;
+  quota_remaining?: number;
+  error_id?: number;
+  error_message?: string;
+  error_name?: string;
+}
+
 const API = 'https://api.stackexchange.com/2.3';
 const SITE = 'stackoverflow';
 
@@ -32,7 +42,7 @@ function extractUserId(handle: string): string {
   const clean = handle.trim();
   if (/^\d+$/.test(clean)) return clean;
 
-  const urlMatch = clean.match(/stackoverflow\.com\/users\/(\d+)/i);
+  const urlMatch = clean.match(/(?:https?:\/\/)?(?:www\.)?stackoverflow\.com\/users\/(\d+)(?:\/|$)/i);
   if (urlMatch) return urlMatch[1];
 
   const pathMatch = clean.match(/\/users\/(\d+)(?:\/|$)/i);
@@ -46,30 +56,53 @@ function toIsoDate(seconds: number | undefined): string | null {
   return new Date(seconds * 1000).toISOString();
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
+async function fetchJson<T>(url: string): Promise<StackExchangeResponse<T>> {
   const response = await fetch(url, {
-    headers: { Accept: 'application/json', 'User-Agent': 'APIVue/1.0' },
+    headers: {
+      Accept: 'application/json',
+      'User-Agent': 'APIVue/1.0 (+https://chethan-ultimax.github.io/APIVue/)',
+    },
   });
+
+  let data: StackExchangeResponse<T>;
+  try {
+    data = (await response.json()) as StackExchangeResponse<T>;
+  } catch {
+    throw new Error(`Stack Overflow returned an invalid response (HTTP ${response.status}).`);
+  }
+
+  if (data.error_id) {
+    throw new Error(
+      `Stack Overflow API error ${data.error_id}: ${data.error_message ?? data.error_name ?? 'unknown error'}.`,
+    );
+  }
 
   if (!response.ok) {
     throw new Error(`Stack Overflow request failed with status ${response.status}.`);
   }
 
-  return (await response.json()) as T;
+  return data;
 }
 
 async function fetchUser(userId: string): Promise<StackOverflowUser> {
-  const url = `${API}/users/${encodeURIComponent(userId)}?site=${SITE}&filter=default`;
-  const data = await fetchJson<{ items: StackOverflowUser[] }>(url);
+  // Do not add a filter here. The default public user representation already
+  // contains the fields APIVue needs and matches the documented /users/{ids}
+  // response used by Stack Overflow's public API.
+  const url = `${API}/users/${encodeURIComponent(userId)}?site=${SITE}`;
+  const data = await fetchJson<StackOverflowUser>(url);
   const user = data.items?.[0];
-  if (!user) throw new Error(`Stack Overflow user "${userId}" not found.`);
+
+  if (!user || String(user.user_id) !== userId) {
+    throw new Error(`Stack Overflow user "${userId}" not found.`);
+  }
+
   return user;
 }
 
 async function fetchTopTags(userId: string): Promise<StackOverflowTag[]> {
   const url = `${API}/users/${encodeURIComponent(userId)}/top-answer-tags?site=${SITE}&pagesize=10`;
   try {
-    const data = await fetchJson<{ items: StackOverflowTag[] }>(url);
+    const data = await fetchJson<StackOverflowTag>(url);
     return data.items ?? [];
   } catch (error) {
     console.warn('[stackoverflow] top-answer-tags failed:', error);
@@ -126,7 +159,6 @@ export async function getStackOverflowUserProfile(
   const views = user.view_count ?? 0;
   const totalBadges = badges.gold + badges.silver + badges.bronze;
 
-  /* Highlights — objects, not strings. */
   const highlights: Array<{ title: string; subtitle?: string }> = [];
   if (reputation > 0) {
     highlights.push({ title: `${reputation.toLocaleString()} reputation` });
