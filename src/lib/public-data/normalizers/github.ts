@@ -1,68 +1,11 @@
 import type { PublicActivity, PublicBreakdown, PublicDataResult, PublicMetric, PublicProfile, PublicRepository } from '../types';
 import type { RawGitHubEvent, RawGitHubProfile, RawGitHubRepo } from '../fetchers/github';
-
-function toPublicProfile(raw: RawGitHubProfile): PublicProfile {
-  const { user } = raw;
-  return { platform: 'github', username: user.login, displayName: user.name?.trim() || null, avatarUrl: user.avatar_url, profileUrl: user.html_url, bio: user.bio?.trim() || null, location: user.location?.trim() || null, joinedAt: user.created_at };
-}
-function toPublicRepository(repo: RawGitHubRepo): PublicRepository {
-  return { name: repo.name, url: repo.html_url, description: repo.description?.trim() || null, language: repo.language, stars: repo.stargazers_count, forks: repo.forks_count, openIssues: repo.open_issues_count, isFork: repo.fork, isArchived: repo.archived, topics: repo.topics ?? [], updatedAt: repo.pushed_at || repo.updated_at };
-}
+function toPublicProfile(raw: RawGitHubProfile): PublicProfile { const { user } = raw; return { platform: 'github', username: user.login, displayName: user.name?.trim() || null, avatarUrl: user.avatar_url, profileUrl: user.html_url, bio: user.bio?.trim() || null, location: user.location?.trim() || null, joinedAt: user.created_at }; }
+function toPublicRepository(repo: RawGitHubRepo): PublicRepository { return { name: repo.name, url: repo.html_url, description: repo.description?.trim() || null, language: repo.language, stars: repo.stargazers_count, forks: repo.forks_count, openIssues: repo.open_issues_count, isFork: repo.fork, isArchived: repo.archived, topics: repo.topics ?? [], updatedAt: repo.pushed_at || repo.updated_at }; }
 function capitalize(s: string) { return s.charAt(0).toUpperCase() + s.slice(1); }
-function formatEventTitle(event: RawGitHubEvent): string {
-  switch (event.type) {
-    case 'PushEvent': { const n = event.payload?.size ?? event.payload?.commits?.length ?? 0; return n > 0 ? `Pushed ${n} commit${n === 1 ? '' : 's'}` : 'Pushed code'; }
-    case 'PullRequestEvent': return event.payload?.action ? `${capitalize(event.payload.action)} a pull request` : 'Updated a pull request';
-    case 'IssuesEvent': return event.payload?.action ? `${capitalize(event.payload.action)} an issue` : 'Updated an issue';
-    case 'IssueCommentEvent': return 'Commented on an issue';
-    case 'PullRequestReviewEvent': return 'Reviewed a pull request';
-    case 'CreateEvent': return event.payload?.ref ? `Created ${event.payload.ref}` : 'Created a reference';
-    case 'DeleteEvent': return event.payload?.ref ? `Deleted ${event.payload.ref}` : 'Deleted a reference';
-    case 'ForkEvent': return 'Forked a repository';
-    case 'WatchEvent': return 'Starred a repository';
-    case 'ReleaseEvent': return 'Published a release';
-    case 'PublicEvent': return 'Made a repository public';
-    default: return event.type.replace(/Event$/, '') || 'Activity';
-  }
-}
-function toPublicActivity(event: RawGitHubEvent): PublicActivity | null {
-  if (!event.created_at) return null;
-  return { id: event.id, title: formatEventTitle(event), description: event.repo?.name, timestamp: event.created_at, url: event.repo ? `https://github.com/${event.repo.name}` : undefined, type: event.type };
-}
-function buildLanguageBreakdown(repos: RawGitHubRepo[]): PublicBreakdown {
-  const counts = new Map<string, number>();
-  for (const repo of repos) if (!repo.fork && repo.language) counts.set(repo.language, (counts.get(repo.language) ?? 0) + 1);
-  const total = Array.from(counts.values()).reduce((a, b) => a + b, 0);
-  return { label: 'Languages', items: Array.from(counts.entries()).map(([label, value]) => ({ label, value, percentage: total ? Math.round((value / total) * 1000) / 10 : 0 })).sort((a, b) => b.value - a.value) };
-}
-function buildTopRepositories(repos: RawGitHubRepo[]) {
-  return repos.filter((r) => !r.fork && !r.archived && !r.disabled).sort((a, b) => b.stargazers_count - a.stargazers_count).slice(0, 6).map(toPublicRepository);
-}
-function buildMetrics(raw: RawGitHubProfile): PublicMetric[] {
-  const { user, repos } = raw;
-  const originals = repos.filter((r) => !r.fork); const forks = repos.filter((r) => r.fork);
-  const totalStars = originals.reduce((s, r) => s + r.stargazers_count, 0);
-  const totalForks = originals.reduce((s, r) => s + r.forks_count, 0);
-  const openIssues = originals.reduce((s, r) => s + r.open_issues_count, 0);
-  return [
-    { label: 'Public repositories', value: user.public_repos }, { label: 'Followers', value: user.followers }, { label: 'Following', value: user.following },
-    { label: 'Public gists', value: user.public_gists }, { label: 'Total stars', value: totalStars }, { label: 'Total forks', value: totalForks },
-    { label: 'Original repositories', value: originals.length }, { label: 'Forked repositories', value: forks.length }, { label: 'Open issues', value: openIssues },
-    { label: 'Contributions', value: raw.contributions.totalContributions, description: 'GitHub contribution calendar' },
-  ];
-}
-
-export function normalizeGitHubData(raw: RawGitHubProfile): PublicDataResult {
-  const activity = raw.events.map(toPublicActivity).filter((item): item is PublicActivity => Boolean(item));
-  return {
-    platform: 'github', profile: toPublicProfile(raw), metrics: buildMetrics(raw), activity,
-    breakdowns: [buildLanguageBreakdown(raw.repos)], repositories: buildTopRepositories(raw.repos),
-    githubContributions: {
-      days: raw.contributions.days,
-      totalContributions: raw.contributions.totalContributions,
-      totalCommits: null, totalIssues: null, totalPullRequests: null, totalReviews: null, totalDiscussions: null,
-      activeDays: raw.contributions.days.filter((day) => day.count > 0).length,
-    },
-    fetchedAt: new Date().toISOString(), source: 'public-api',
-  };
-}
+function formatEventTitle(event: RawGitHubEvent): string { switch (event.type) { case 'PushEvent': { const n = event.payload?.size ?? event.payload?.commits?.length ?? 0; return n > 0 ? `Pushed ${n} commit${n === 1 ? '' : 's'}` : 'Pushed code'; } case 'PullRequestEvent': return event.payload?.action ? `${capitalize(event.payload.action)} a pull request` : 'Updated a pull request'; case 'IssuesEvent': return event.payload?.action ? `${capitalize(event.payload.action)} an issue` : 'Updated an issue'; case 'IssueCommentEvent': return 'Commented on an issue'; case 'PullRequestReviewEvent': return 'Reviewed a pull request'; case 'CreateEvent': return event.payload?.ref ? `Created ${event.payload.ref}` : 'Created a reference'; case 'DeleteEvent': return event.payload?.ref ? `Deleted ${event.payload.ref}` : 'Deleted a reference'; case 'ForkEvent': return 'Forked a repository'; case 'WatchEvent': return 'Starred a repository'; case 'ReleaseEvent': return 'Published a release'; case 'PublicEvent': return 'Made a repository public'; default: return event.type.replace(/Event$/, '') || 'Activity'; } }
+function toPublicActivity(event: RawGitHubEvent): PublicActivity | null { if (!event.created_at) return null; return { id: event.id, title: formatEventTitle(event), description: event.repo?.name, timestamp: event.created_at, url: event.repo ? `https://github.com/${event.repo.name}` : undefined, type: event.type }; }
+function buildLanguageBreakdown(repos: RawGitHubRepo[]): PublicBreakdown { const counts = new Map<string, number>(); for (const repo of repos) if (!repo.fork && repo.language) counts.set(repo.language, (counts.get(repo.language) ?? 0) + 1); const total = Array.from(counts.values()).reduce((a, b) => a + b, 0); return { label: 'Languages', items: Array.from(counts.entries()).map(([label, value]) => ({ label, value, percentage: total ? Math.round((value / total) * 1000) / 10 : 0 })).sort((a, b) => b.value - a.value) }; }
+function buildTopRepositories(repos: RawGitHubRepo[]) { return repos.filter((r) => !r.fork && !r.archived && !r.disabled).sort((a, b) => b.stargazers_count - a.stargazers_count).slice(0, 6).map(toPublicRepository); }
+function buildMetrics(raw: RawGitHubProfile): PublicMetric[] { const { user, repos } = raw; const originals = repos.filter((r) => !r.fork); const forks = repos.filter((r) => r.fork); const totalStars = originals.reduce((s, r) => s + r.stargazers_count, 0); const totalForks = originals.reduce((s, r) => s + r.forks_count, 0); const openIssues = originals.reduce((s, r) => s + r.open_issues_count, 0); const contributionTotal = raw.contributions?.totalContributions; return [{ label: 'Public repositories', value: user.public_repos }, { label: 'Followers', value: user.followers }, { label: 'Following', value: user.following }, { label: 'Public gists', value: user.public_gists }, { label: 'Total stars', value: totalStars }, { label: 'Total forks', value: totalForks }, { label: 'Original repositories', value: originals.length }, { label: 'Forked repositories', value: forks.length }, { label: 'Open issues', value: openIssues }, ...(contributionTotal !== undefined ? [{ label: 'Contributions', value: contributionTotal, description: 'GitHub contribution calendar' }] : [])]; }
+export function normalizeGitHubData(raw: RawGitHubProfile): PublicDataResult { const activity = raw.events.map(toPublicActivity).filter((item): item is PublicActivity => Boolean(item)); const contributionDays = raw.contributions?.days ?? []; const contributionTotal = raw.contributions?.totalContributions ?? contributionDays.reduce((sum, day) => sum + day.count, 0); return { platform: 'github', profile: toPublicProfile(raw), metrics: buildMetrics(raw), activity, breakdowns: [buildLanguageBreakdown(raw.repos)], repositories: buildTopRepositories(raw.repos), githubContributions: { days: contributionDays, totalContributions: contributionTotal, totalCommits: null, totalIssues: null, totalPullRequests: null, totalReviews: null, totalDiscussions: null, activeDays: contributionDays.filter((day) => day.count > 0).length }, fetchedAt: new Date().toISOString(), source: 'public-api' }; }
