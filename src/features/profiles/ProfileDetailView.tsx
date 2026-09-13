@@ -16,6 +16,6 @@ export function ProfileDetailView() {
  const refresh=async()=>{setRefreshing(true);try{await sync.mutateAsync({platform:profile.platform,handle:profile.handle});await refetch()}finally{setRefreshing(false)}};
  if(profile.platform==='github')return <GitHubProfileView profile={profile} snapshots={snapshots} liveMeta={liveMeta} refreshing={refreshing} onRefresh={()=>void refresh()}/>;
  if(profile.platform==='leetcode'||profile.platform==='codeforces')return <CompetitiveProfileView profile={profile} snapshots={snapshots} refreshing={refreshing} onRefresh={()=>void refresh}/>;
- if(profile.platform==='codewars'||profile.platform==='stackoverflow')return <CommunityProfileView profile={profile} snapshots={snapshots} refreshing={refreshing} onRefresh={()=>void refresh}/>;
+ if(profile.platform==='codewars'||profile.platform==='stackoverflow'||profile.platform==='tryhackme'||profile.platform==='hackthebox')return <CommunityProfileView profile={profile} snapshots={snapshots} refreshing={refreshing} onRefresh={()=>void refresh}/>;
  return <div className="p-6"><Card><CardContent className="p-10"><Link to="/dashboard/profiles" className="text-sm text-muted-foreground">← Profiles</Link><h1 className="mt-5 text-2xl font-bold">{profile.displayName||profile.handle}</h1><p className="mt-1 text-muted-foreground">@{profile.handle}</p></CardContent></Card></div>;
 }
