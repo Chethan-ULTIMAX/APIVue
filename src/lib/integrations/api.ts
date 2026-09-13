@@ -14,7 +14,7 @@ async function backendRequest<T>(path: string, options?: RequestInit): Promise<T
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...((options?.headers as Record<string, string> | undefined) ?? {}) };
   if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
   const response = await fetch(`${API_BASE}${path}`, { ...options, credentials: 'include', headers });
-  if (!response.ok) { let message = `Request failed with status ${response.status}.`; try { const body = await response.json() as { error?: string; message?: string }; message = body.error ?? body.message ?? message; } catch { /* keep default */ } throw new Error(message); }
+  if (!response.ok) { let message = `Request failed with status ${response.status}.`; try { const body = await response.json() as { error?: string; message?: string }; message = body.error ?? body.message ?? message; } catch {} throw new Error(message); }
   return response.status === 204 ? undefined as T : await response.json() as T;
 }
 
@@ -22,10 +22,21 @@ async function syncPublicProfile(platform: IntegrationId, handle: string): Promi
   const clean = handle.trim().replace(/^@/, '');
   if (!clean) throw new Error('A username or platform handle is required.');
   const { data, error } = await supabase.functions.invoke('sync-profile', { body: { platform, handle: clean, save: true } });
-  if (error) { let message = error.message; const context = (error as { context?: { json?: () => Promise<unknown> } }).context; if (context?.json) { try { const body = await context.json() as { error?: string }; if (body?.error) message = body.error; } catch { /* keep default */ } } throw new Error(message); }
+  if (error) { let message = error.message; const context = (error as { context?: { json?: () => Promise<unknown> } }).context; if (context?.json) { try { const body = await context.json() as { error?: string }; if (body?.error) message = body.error; } catch {} } throw new Error(message); }
   const payload = data as { error?: string; profile?: SyncProfile };
   if (payload.error) throw new Error(payload.error);
   if (!payload.profile) throw new Error('The provider returned no profile data.');
+  return payload.profile;
+}
+
+async function syncStackOverflowProfile(handle: string): Promise<SyncProfile> {
+  const clean = handle.trim().replace(/^@/, '');
+  if (!clean) throw new Error('A Stack Overflow user ID or profile URL is required.');
+  const { data, error } = await supabase.functions.invoke('sync-stackoverflow', { body: { handle: clean } });
+  if (error) { let message = error.message; const context = (error as { context?: { json?: () => Promise<unknown> } }).context; if (context?.json) { try { const body = await context.json() as { error?: string }; if (body?.error) message = body.error; } catch {} } throw new Error(message); }
+  const payload = data as { error?: string; profile?: SyncProfile };
+  if (payload.error) throw new Error(payload.error);
+  if (!payload.profile) throw new Error('Stack Overflow sync returned no profile data.');
   return payload.profile;
 }
 
@@ -35,12 +46,12 @@ export async function connectPublicProfile(platform: 'leetcode' | 'codewars' | '
   const provider = platform === 'leetcode' ? 'LeetCode' : platform === 'codewars' ? 'Codewars' : 'Stack Overflow';
   const confirmed = window.confirm(`Track this public ${provider} profile?\n\n${clean}\n\nAPIVue will load publicly available data and add it to your tracked profiles. No ownership verification is required.`);
   if (!confirmed) throw new Error('Profile addition cancelled.');
-  return syncPublicProfile(platform, clean);
+  return platform === 'stackoverflow' ? syncStackOverflowProfile(clean) : syncPublicProfile(platform, clean);
 }
 
 async function invokeOAuth(functionName: string, provider: string, body: Record<string, unknown> = {}): Promise<void> {
   const { data, error } = await supabase.functions.invoke(functionName, { body });
-  if (error) { let message = error.message; const context = (error as { context?: { json?: () => Promise<unknown> } }).context; if (context?.json) { try { const responseBody = await context.json() as { error?: string }; if (responseBody?.error) message = responseBody.error; } catch { /* keep default */ } } throw new Error(message); }
+  if (error) { let message = error.message; const context = (error as { context?: { json?: () => Promise<unknown> } }).context; if (context?.json) { try { const responseBody = await context.json() as { error?: string }; if (responseBody?.error) message = responseBody.error; } catch {} } throw new Error(message); }
   const payload = data as { error?: string; url?: string };
   if (payload.error) throw new Error(payload.error);
   if (!payload.url) throw new Error(`${provider} authorization URL was not returned.`);
@@ -54,7 +65,7 @@ export function clearOwnershipChallenge(): void { sessionStorage.removeItem('api
 export async function verifyOwnership(platform: 'leetcode' | 'codewars', handle: string, code: string): Promise<void> { if (platform === 'codewars') { const challenge = getOwnershipChallenge(); if (!challenge?.challengeId) throw new Error('The Codewars verification challenge is missing. Start verification again.'); const { data, error } = await supabase.functions.invoke('check-profile-ownership', { body: { platform, handle, challengeId: challenge.challengeId } }); if (error) throw new Error(error.message); const result = data as { error?: string; verified?: boolean; expired?: boolean }; if (result.error) throw new Error(result.error); if (result.expired) throw new Error('The Codewars verification challenge expired. Generate a new one.'); if (!result.verified) throw new Error('Codewars has not confirmed the webhook yet. Save the webhook in Codewars and try again.'); clearOwnershipChallenge(); return; } const { data, error } = await supabase.functions.invoke('verify-profile-ownership', { body: { platform, handle, code } }); if (error) throw new Error(error.message); const result = data as { error?: string; verified?: boolean }; if (result.error) throw new Error(result.error); if (!result.verified) throw new Error('Ownership verification did not complete.'); clearOwnershipChallenge(); }
 
 export async function getIntegrationStatus(): Promise<IntegrationStatus> {
-  if (API_BASE) { try { return await backendRequest<IntegrationStatus>('/api/integrations'); } catch { /* serverless fallback below */ } }
+  if (API_BASE) { try { return await backendRequest<IntegrationStatus>('/api/integrations'); } catch {} }
   const { data, error } = await supabase.from('tracked_profiles').select('platform,handle,display_name,avatar_url,profile_url,last_synced_at,data').order('last_synced_at', { ascending: false });
   if (error) throw new Error(error.message);
   const status: IntegrationStatus = { github: { connected: false }, codeforces: { connected: false }, leetcode: { connected: false }, codewars: { connected: false }, stackoverflow: { connected: false } };
@@ -67,7 +78,7 @@ export async function connectCodeforces(_handle?: string): Promise<void> { await
 export async function connectStackOverflow(handle: string): Promise<void> { await connectPublicProfile('stackoverflow', handle); }
 export async function disconnectGitHub(): Promise<void> { await disconnectPublicProfile('github'); }
 export async function syncGitHub(): Promise<GitHubPrivateSync> { const { data, error } = await supabase.functions.invoke('sync-github-private', { body: {} }); if (error) throw new Error(error.message); const payload = data as Partial<GitHubPrivateSync> & { error?: string }; if (payload.error) throw new Error(payload.error); if (!payload.syncedAt || !payload.username) throw new Error('GitHub sync returned an incomplete result.'); return payload as GitHubPrivateSync; }
-export async function syncIntegration(provider: Exclude<IntegrationId, 'github'>): Promise<{ syncedAt: string; handle: string; provider: string }> { const status = await getIntegrationStatus(); const handle = status[provider].username ?? status[provider].handle; if (!handle) throw new Error(`${provider} is not connected.`); const profile = await syncPublicProfile(provider, handle); return { syncedAt: profile.lastSyncedAt ?? profile.last_synced_at ?? new Date().toISOString(), handle: profile.handle, provider }; }
+export async function syncIntegration(provider: Exclude<IntegrationId, 'github'>): Promise<{ syncedAt: string; handle: string; provider: string }> { const status = await getIntegrationStatus(); const handle = status[provider].username ?? status[provider].handle; if (!handle) throw new Error(`${provider} is not connected.`); const profile = provider === 'stackoverflow' ? await syncStackOverflowProfile(handle) : await syncPublicProfile(provider, handle); return { syncedAt: profile.lastSyncedAt ?? profile.last_synced_at ?? new Date().toISOString(), handle: profile.handle, provider }; }
 export async function disconnectCodeforces(): Promise<void> { await disconnectPublicProfile('codeforces'); }
 export async function connectLeetCode(handle: string): Promise<void> { await connectPublicProfile('leetcode', handle); }
 export async function disconnectLeetCode(): Promise<void> { await disconnectPublicProfile('leetcode'); }
