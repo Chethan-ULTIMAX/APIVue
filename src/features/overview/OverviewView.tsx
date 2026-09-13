@@ -1,16 +1,15 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Activity, ArrowRight, BarChart3, Brain, CalendarDays, Database, GitCompareArrows, Lock, Plus, Radar, RefreshCw, Sparkles, Target, TrendingUp, Users, Zap } from 'lucide-react';
+import { Activity, ArrowRight, BarChart3, Brain, CalendarDays, Database, GitCompareArrows, Lock, Plus, Radar, RefreshCw, Sparkles, Target, TrendingUp, Users } from 'lucide-react';
 import { useProfileSnapshots, useTrackedProfiles } from '@/hooks/use-profiles';
 import { formatNumber, formatRelativeDate, platformLabel, recentActivity, allActivity, numericMetrics, snapshotDelta } from '@/lib/analytics/dashboard-data';
 import { getIntegration } from '@/lib/integrations/registry';
-import type { TrackedProfile } from '@/lib/integrations/registry';
+import type { ProfileSnapshot, TrackedProfile } from '@/lib/integrations/registry';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-const accents = ['violet', 'blue', 'orange', 'emerald', 'cyan'];
 const accentClasses = [
   'border-violet-500/25 bg-violet-500/[0.05] text-violet-600 dark:text-violet-400',
   'border-blue-500/25 bg-blue-500/[0.05] text-blue-600 dark:text-blue-400',
@@ -19,20 +18,15 @@ const accentClasses = [
   'border-cyan-500/25 bg-cyan-500/[0.05] text-cyan-600 dark:text-cyan-400',
 ];
 
-function metricValue(profile: TrackedProfile, key: string) {
-  const metric = profile.data?.metrics?.find((item) => item.key === key);
-  return metric && typeof metric.value === 'number' ? metric.value : null;
-}
-
-function ProfileStatCard({ profile, index, snapshots }: { profile: TrackedProfile; index: number; snapshots: ReturnType<typeof useProfileSnapshots>['data'] extends Array<infer T> ? T[] : never[] }) {
+function ProfileStatCard({ profile, index, snapshots }: { profile: TrackedProfile; index: number; snapshots: ProfileSnapshot[] }) {
   const metrics = numericMetrics(profile).slice(0, 3);
   const integration = getIntegration(profile.platform);
   const main = metrics[0];
-  const delta = main ? snapshotDelta(snapshots ?? [], profile.id, main.key) : null;
+  const delta = main ? snapshotDelta(snapshots, profile.id, main.key) : null;
   const classes = accentClasses[index % accentClasses.length];
 
   return (
-    <Card className={`group overflow-hidden border bg-card/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${classes.split(' ').slice(0, 1).join(' ')}`}>
+    <Card className="group overflow-hidden border-border bg-card/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${classes}`}>
