@@ -1,15 +1,12 @@
+import { supabase } from '@/integrations/supabase/client';
+
 /**
  * LeetCode public profile fetcher.
  *
- * Uses LeetCode's public GraphQL endpoint. Response shapes are typed
- * against the fields we request in the query.
+ * LeetCode's GraphQL endpoint is not reliable for browser-side requests.
+ * APIVue therefore calls its public Supabase Edge Function proxy, which
+ * fetches the same public GraphQL data server-side and returns it here.
  */
-
-const LEETCODE_GRAPHQL = 'https://leetcode.com/graphql';
-
-/* ============================================================
- * Raw types
- * ============================================================ */
 
 export interface RawLeetCodeDifficultyCount {
   difficulty: string;
@@ -55,99 +52,39 @@ export interface RawLeetCodeData {
   matchedUser: RawLeetCodeMatchedUser | null;
   userContestRanking: RawLeetCodeContestRanking | null;
   allQuestionsCount: RawLeetCodeDifficultyCount[];
+  userContestRankingHistory?: Array<{
+    attended: boolean;
+    rating: number;
+    ranking: number;
+    contest: { title: string; startTime: number };
+  }>;
 }
-
-/* ============================================================
- * Query
- * ============================================================ */
-
-const LEETCODE_QUERY = `
-query apivue($username: String!) {
-  matchedUser(username: $username) {
-    username
-    profile {
-      realName
-      userAvatar
-      ranking
-      aboutMe
-      countryName
-      reputation
-    }
-    submitStatsGlobal {
-      acSubmissionNum { difficulty count submissions }
-    }
-    languageProblemCount { languageName problemsSolved }
-    submissionCalendar
-    badges { displayName }
-  }
-  userContestRanking(username: $username) {
-    attendedContestsCount
-    rating
-    globalRanking
-    topPercentage
-  }
-  allQuestionsCount { difficulty count }
-}
-`;
-
-/* ============================================================
- * HTTP helper
- * ============================================================ */
-
-interface GraphQLResponse<T> {
-  data?: T;
-  errors?: Array<{ message: string }>;
-}
-
-async function leetcodeRequest<T>(variables: Record<string, unknown>): Promise<T> {
-  const response = await fetch(LEETCODE_GRAPHQL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Referer: 'https://leetcode.com',
-    },
-    body: JSON.stringify({ query: LEETCODE_QUERY, variables }),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `LeetCode request failed with status ${response.status}.`,
-    );
-  }
-
-  const payload = (await response.json()) as GraphQLResponse<T>;
-
-  if (payload.errors?.length) {
-    throw new Error(payload.errors.map((e) => e.message).join('; '));
-  }
-
-  if (!payload.data) {
-    throw new Error('LeetCode returned an empty response.');
-  }
-
-  return payload.data;
-}
-
-/* ============================================================
- * Public API
- * ============================================================ */
 
 export async function fetchLeetCodePublicProfile(
   username: string,
 ): Promise<RawLeetCodeData> {
   const cleanUsername = username.trim();
+  if (!cleanUsername) throw new Error('Enter a LeetCode username.');
 
-  if (!cleanUsername) {
-    throw new Error('Enter a LeetCode username.');
-  }
-
-  const data = await leetcodeRequest<RawLeetCodeData>({
-    username: cleanUsername,
+  const { data, error } = await supabase.functions.invoke('public-profile', {
+    body: { provider: 'leetcode', handle: cleanUsername },
   });
 
-  if (!data.matchedUser) {
-    throw new Error('LeetCode user not found.');
+  if (error) {
+    let message = error.message;
+    const context = (error as { context?: { json?: () => Promise<unknown> } }).context;
+    if (context?.json) {
+      try {
+        const body = await context.json() as { error?: string };
+        if (body?.error) message = body.error;
+      } catch { /* keep the SDK message */ }
+    }
+    throw new Error(message || 'LeetCode public data request failed.');
   }
 
-  return data;
+  const payload = data as { error?: string; data?: RawLeetCodeData } | null;
+  if (payload?.error) throw new Error(payload.error);
+  if (!payload?.data?.matchedUser) throw new Error('LeetCode user not found.');
+
+  return payload.data;
 }
