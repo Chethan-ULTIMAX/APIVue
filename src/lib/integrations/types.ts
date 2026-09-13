@@ -1,5 +1,6 @@
 /** Shared integration types. */
 import type { LucideIcon } from 'lucide-react';
+import type { GitHubContributionAnalytics } from '@/lib/public-data/types';
 export type IntegrationId = 'github' | 'codeforces' | 'leetcode' | 'codewars' | 'stackoverflow';
 export type CategoryId = 'development' | 'competitive-programming' | 'security' | 'learning' | 'activity' | 'goals';
 export interface ConnectedAccount { connected: boolean; username?: string; handle?: string; displayName?: string | null; avatarUrl?: string | null; profileUrl?: string; connectedAt?: string; lastSyncedAt?: string; error?: string; privateAccess?: boolean; accessibleRepoCount?: number; ownershipVerified?: boolean; verificationMethod?: string; }
@@ -16,6 +17,7 @@ export interface ProfileData {
   bio?: string; location?: string; joinedAt?: string;
   metrics?: Metric[]; activity?: Array<{ date: string; count: number; label?: string; type?: string }>;
   ratingHistory?: RatingHistoryPoint[]; highlights?: ProfileHighlight[]; breakdowns?: ProfileBreakdown[];
+  githubContributions?: GitHubContributionAnalytics;
   privateAccess?: boolean; accessibleRepoCount?: number; privateRepoCount?: number;
   repositories?: GitHubRepository[]; publicRepositories?: GitHubRepository[]; privateRepositories?: GitHubRepository[];
   ownershipVerified?: boolean; verificationMethod?: string; verificationVerifiedAt?: string;
