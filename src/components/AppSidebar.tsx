@@ -51,9 +51,7 @@ const NAV_SECTIONS: NavSection[] = [
 ];
 
 function isItemActive(pathname: string, item: NavItem, allHrefs: string[]) {
-  if (item.matchPrefix) {
-    return pathname === item.href || pathname.startsWith(`${item.href}/`);
-  }
+  if (item.matchPrefix) return pathname === item.href || pathname.startsWith(`${item.href}/`);
   if (pathname !== item.href) return false;
   return !allHrefs.some(
     (href) => href !== item.href && href.startsWith(`${item.href}/`) && pathname.startsWith(href),
@@ -73,31 +71,29 @@ export function AppSidebar({ onNavigate, onClose }: AppSidebarProps = {}) {
   const logoSrc = `${assetBase.replace(/\/$/, '')}/favicon.ico`;
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar/90 shadow-[8px_0_30px_-26px_hsl(var(--foreground)/.35)]">
-      <div className="flex h-20 shrink-0 items-center justify-between border-b border-sidebar-border px-4">
-        <Link to="/dashboard" className="group flex items-center gap-2.5" onClick={onNavigate}>
-          <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-            <img src={logoSrc} alt="" className="relative z-10 h-6 w-6 object-contain brightness-0 invert" />
+    <aside className="flex h-full w-[248px] flex-col border-r border-sidebar-border bg-sidebar/95">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-sidebar-border px-3">
+        <Link to="/dashboard" className="group flex items-center gap-2.5 rounded-lg px-1.5 py-1" onClick={onNavigate}>
+          <span className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg bg-primary text-primary-foreground shadow-sm shadow-primary/20 transition-transform duration-200 group-hover:scale-105">
+            <img src={logoSrc} alt="" className="relative z-10 h-5 w-5 object-contain brightness-0 invert" />
             <span className="absolute inset-0 bg-gradient-to-br from-white/25 to-transparent" />
           </span>
-          <span className="bg-gradient-to-r from-foreground to-primary bg-clip-text text-xl font-black tracking-tight text-transparent">
-            APIVue
-          </span>
+          <span className="text-[15px] font-semibold tracking-[-0.02em] text-foreground">APIVue</span>
         </Link>
         {onClose && (
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 lg:hidden" aria-label="Close navigation">
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-lg lg:hidden" aria-label="Close navigation">
             <X className="h-4 w-4" />
           </Button>
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-3 scrollbar-thin">
+      <nav className="flex-1 overflow-y-auto px-2.5 py-4 scrollbar-thin">
         {NAV_SECTIONS.map((section) => (
           <div key={section.title} className="mb-5 last:mb-0">
-            <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/55">
+            <p className="px-2.5 pb-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
               {section.title}
             </p>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const active = isItemActive(location.pathname, item, allHrefs);
@@ -107,13 +103,13 @@ export function AppSidebar({ onNavigate, onClose }: AppSidebarProps = {}) {
                     to={item.href}
                     onClick={onNavigate}
                     className={cn(
-                      'focus-ring group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200',
+                      'focus-ring group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-[background-color,color,transform] duration-150',
                       active
-                        ? 'bg-primary/10 font-semibold text-primary shadow-sm before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-primary'
-                        : 'text-muted-foreground hover:-translate-y-px hover:bg-accent/70 hover:text-foreground',
+                        ? 'bg-accent font-medium text-foreground shadow-[inset_0_0_0_1px_hsl(var(--border)/.45)]'
+                        : 'text-muted-foreground hover:bg-accent/65 hover:text-foreground',
                     )}
                   >
-                    <Icon className={cn('h-4 w-4 shrink-0 transition-transform group-hover:scale-105', active && 'text-primary')} />
+                    <Icon className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-colors', active && 'text-primary')} />
                     <span className="truncate">{item.label}</span>
                     {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />}
                   </Link>
@@ -124,23 +120,23 @@ export function AppSidebar({ onNavigate, onClose }: AppSidebarProps = {}) {
         ))}
       </nav>
 
-      <div className="shrink-0 border-t border-sidebar-border p-3">
-        <div className="mb-3 flex items-center gap-2 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.06] px-3 py-2.5">
+      <div className="shrink-0 border-t border-sidebar-border p-2.5">
+        <div className="mb-2 flex items-center gap-2 rounded-lg border border-emerald-500/15 bg-emerald-500/[0.045] px-2.5 py-2">
           <Radio className="h-3.5 w-3.5 text-emerald-500" />
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Data engine</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Data engine</p>
             <p className="truncate text-[10px] text-muted-foreground">Ready for a sync</p>
           </div>
         </div>
         {user?.email && (
-          <p className="mb-2 truncate rounded-lg bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground" title={user.email}>
+          <p className="mb-1 truncate rounded-lg px-2.5 py-2 text-[11px] text-muted-foreground" title={user.email}>
             {user.email}
           </p>
         )}
         <button
           type="button"
           onClick={signOut}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+          className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           Sign out
