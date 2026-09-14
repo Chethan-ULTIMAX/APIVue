@@ -602,6 +602,7 @@ function generateRecommendations(
 export function generateAICoachSession(
   profiles: TrackedProfile[],
   snapshots: ProfileSnapshot[],
+  goalsCount = 0,
 ): AISession {
   const report = buildProgressReport(profiles, snapshots);
   const confidence = calculateConfidence(profiles, snapshots);
@@ -659,7 +660,7 @@ export function generateAICoachSession(
       historyDays: report.historyDays,
       events: report.activity.totalEvents,
       streak: report.activity.currentStreak,
-      goals: 0, // Will be populated when goals are wired into analytics.
+      goals: goalsCount,
     },
     insights: allInsights,
     recommendations,
@@ -676,6 +677,7 @@ export function generateAICoachSession(
 export function getAIShortSummary(
   profiles: TrackedProfile[],
   snapshots: ProfileSnapshot[],
+  goalsCount = 0,
 ): AIShortSummary {
   const report = buildProgressReport(profiles, snapshots);
   const confidence = calculateConfidence(profiles, snapshots);

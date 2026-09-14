@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProfileSnapshots, useTrackedProfiles } from '@/hooks/use-profiles';
+import { useGoals } from '@/hooks/use-goals';
 import {
   generateAICoachSession,
   getAIShortSummary,
@@ -479,24 +480,26 @@ function AIInsightsEmptyState() {
 export function AIInsightsView() {
   const profilesQuery = useTrackedProfiles();
   const snapshotsQuery = useProfileSnapshots();
+  const goalsQuery = useGoals();
 
   const [activeFilter, setActiveFilter] = useState<FilterId>('all');
 
   const profiles = profilesQuery.data ?? [];
   const snapshots = snapshotsQuery.data ?? [];
-  const isLoading = profilesQuery.isLoading || snapshotsQuery.isLoading;
-  const error = (profilesQuery.error ?? snapshotsQuery.error) as Error | null;
+  const goals = goalsQuery.data ?? [];
+  const isLoading = profilesQuery.isLoading || snapshotsQuery.isLoading || goalsQuery.isLoading;
+  const error = (profilesQuery.error ?? snapshotsQuery.error ?? goalsQuery.error) as Error | null;
 
   /* ---------- Derived data ---------- */
 
   const aiSummary = useMemo(
-    () => getAIShortSummary(profiles, snapshots),
-    [profiles, snapshots],
+    () => getAIShortSummary(profiles, snapshots, goals.length),
+    [profiles, snapshots, goals.length],
   );
 
   const aiSession = useMemo(
-    () => generateAICoachSession(profiles, snapshots),
-    [profiles, snapshots],
+    () => generateAICoachSession(profiles, snapshots, goals.length),
+    [profiles, snapshots, goals.length],
   );
 
   const filteredInsights = useMemo<AIInsight[]>(() => {
@@ -524,7 +527,7 @@ export function AIInsightsView() {
     return groups;
   }, [filteredInsights]);
 
-  const hasData = profiles.length > 0 || snapshots.length > 0;
+  const hasData = profiles.length > 0 || snapshots.length > 0 || goals.length > 0;
 
   /* ---------- Error state ---------- */
 
@@ -552,6 +555,7 @@ export function AIInsightsView() {
               onClick={() => {
                 profilesQuery.refetch();
                 snapshotsQuery.refetch();
+                goalsQuery.refetch();
               }}
             >
               Try again
@@ -646,7 +650,7 @@ export function AIInsightsView() {
                 )}
               </p>
 
-              <div className="mt-5 grid grid-cols-3 gap-3 text-center">
+              <div className="mt-5 grid grid-cols-4 gap-3 text-center">
                 <div>
                   <p className="text-xs text-muted-foreground">Profiles</p>
                   <p className="text-xl font-semibold tabular-nums">
@@ -663,6 +667,12 @@ export function AIInsightsView() {
                   <p className="text-xs text-muted-foreground">Streak</p>
                   <p className="text-xl font-semibold tabular-nums">
                     {aiSession.dataSummary.streak}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Goals</p>
+                  <p className="text-xl font-semibold tabular-nums">
+                    {aiSession.dataSummary.goals}
                   </p>
                 </div>
               </div>

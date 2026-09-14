@@ -178,3 +178,45 @@
     animation: none;
   }
 }
+
+/* ============================================================
+ * APIVue signature data-flow animations
+ * ============================================================ */
+
+@keyframes apivue-node-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes apivue-core-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes apivue-node-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes apivue-core-pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+  }
+}
+
+/* ============================================================
+ * Card reveal animation
+ * ============================================================ */
+
+@keyframes apivue-card-reveal {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-card-reveal {
+  animation: apivue-card-reveal 0.4s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-card-reveal {
+    animation: none;
+  }
+}
