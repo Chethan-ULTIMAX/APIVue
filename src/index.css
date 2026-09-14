@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,45 +6,26 @@
 
 @layer base {
   :root {
-    /* ------------------------------------------------------------
-     * Core surfaces
-     * ------------------------------------------------------------ */
     --background: 0 0% 100%;
     --foreground: 228 14% 10%;
-
     --card: 0 0% 100%;
     --card-foreground: 228 14% 10%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 228 14% 10%;
-
-    /* ------------------------------------------------------------
-     * Brand
-     * ------------------------------------------------------------ */
     --primary: 245 82% 59%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 220 14% 96%;
     --secondary-foreground: 228 14% 18%;
-
     --muted: 220 14% 96%;
     --muted-foreground: 220 10% 45%;
-
     --accent: 220 14% 94%;
     --accent-foreground: 228 14% 10%;
-
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-
     --border: 220 16% 89%;
     --input: 220 16% 89%;
     --ring: 245 82% 59%;
-
     --radius: 0.8rem;
-
-    /* ------------------------------------------------------------
-     * Sidebar
-     * ------------------------------------------------------------ */
     --sidebar-background: 225 20% 98%;
     --sidebar-foreground: 220 10% 35%;
     --sidebar-primary: 245 82% 59%;
@@ -53,16 +34,10 @@
     --sidebar-accent-foreground: 228 14% 10%;
     --sidebar-border: 220 16% 89%;
     --sidebar-ring: 245 82% 59%;
-
-    /* ------------------------------------------------------------
-     * Status colors
-     * ------------------------------------------------------------ */
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
   }
@@ -70,25 +45,18 @@
   .dark {
     --background: 230 22% 8%;
     --foreground: 220 14% 90%;
-
     --card: 230 20% 11%;
     --card-foreground: 220 14% 90%;
-
     --popover: 230 19% 14%;
     --popover-foreground: 220 14% 90%;
-
     --secondary: 230 18% 17%;
     --secondary-foreground: 220 14% 80%;
-
     --muted: 230 18% 15%;
     --muted-foreground: 220 10% 55%;
-
     --accent: 230 18% 20%;
     --accent-foreground: 220 14% 90%;
-
     --border: 230 18% 22%;
     --input: 230 18% 22%;
-
     --sidebar-background: 231 25% 6%;
     --sidebar-foreground: 220 10% 55%;
     --sidebar-accent: 230 19% 13%;
@@ -98,49 +66,39 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
-  /*
-   * Theme-transition: only animate when the user toggles themes.
-   * Applying a transition to `*` unconditionally causes every
-   * hover, focus, and layout shift to animate too, which can feel
-   * sluggish. We scope it to a helper class toggled on <html>.
-   */
-  .theme-transitioning * {
-    transition-property: background-color, color, border-color;
-    transition-duration: 250ms;
-    transition-timing-function: ease;
-  }
+  * { @apply border-border; }
 
   html {
     color-scheme: light;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
   }
 
-  html.dark {
-    color-scheme: dark;
-  }
+  html.dark { color-scheme: dark; }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     min-width: 320px;
-    background-image:
-      radial-gradient(circle at 15% -10%, hsl(var(--primary) / 0.08), transparent 34rem),
-      linear-gradient(hsl(var(--foreground) / 0.018) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--foreground) / 0.018) 1px, transparent 1px);
-    background-size: auto, 40px 40px, 40px 40px;
+    background-image: radial-gradient(circle at 15% -10%, hsl(var(--primary) / 0.055), transparent 34rem);
   }
 
   ::selection {
     background: hsl(var(--primary) / 0.22);
     color: hsl(var(--foreground));
   }
+
+  button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 }
 
 @layer components {
   .surface-card {
-    @apply rounded-2xl border border-border/80 bg-card/80 shadow-sm backdrop-blur-sm;
+    @apply rounded-xl border border-border/75 bg-card shadow-sm;
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  }
+
+  .surface-card:hover {
+    border-color: hsl(var(--border));
+    box-shadow: 0 10px 30px -24px hsl(var(--foreground) / 0.45);
   }
 
   .eyebrow {
@@ -150,63 +108,29 @@
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
+
+  .interactive {
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
+  }
+
+  .interactive:hover { transform: translateY(-1px); }
 }
 
 @layer utilities {
-  .font-mono-id {
-    font-family: 'JetBrains Mono', monospace;
-  }
+  .font-mono-id { font-family: 'JetBrains Mono', monospace; }
 
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--border)) transparent;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(var(--border));
-    border-radius: 3px;
-  }
+  .scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--border)) transparent; }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
 }
-
-/* ============================================================
- * Landing-page demo shine
- * Runs once approximately every 5 seconds.
- * ============================================================ */
 
 @keyframes demo-shine {
-  0%,
-  75% {
-    transform: translateX(-130%) skewX(-20deg);
-  }
-  85% {
-    transform: translateX(130%) skewX(-20deg);
-  }
-  100% {
-    transform: translateX(130%) skewX(-20deg);
-  }
+  0%, 75% { transform: translateX(-130%) skewX(-20deg); }
+  85%, 100% { transform: translateX(130%) skewX(-20deg); }
 }
 
-.animate-demo-shine {
-  animation: demo-shine 5s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-demo-shine {
-    animation: none;
-  }
-}
-
-/* ============================================================
- * APIVue signature data-flow animations
- * ============================================================ */
+.animate-demo-shine { animation: demo-shine 5s ease-in-out infinite; }
 
 @keyframes apivue-node-pulse {
   0%, 100% { opacity: 0.5; transform: scale(1); }
@@ -229,35 +153,17 @@
   50% { box-shadow: 0 0 28px 4px hsl(var(--primary) / 0.14); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  @keyframes apivue-node-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-  }
-  @keyframes apivue-core-pulse {
-    0%, 100% { opacity: 0.3; transform: scale(1); }
-  }
-}
-
-/* ============================================================
- * Card reveal animation
- * ============================================================ */
-
 @keyframes apivue-card-reveal {
   0% { opacity: 0; transform: translateY(8px); }
   100% { opacity: 1; transform: translateY(0); }
 }
 
-.animate-card-reveal {
-  animation: apivue-card-reveal 0.4s ease-out both;
-}
+.animate-card-reveal { animation: apivue-card-reveal 0.4s ease-out both; }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-card-reveal {
-    animation: none;
-  }
-
+  .animate-demo-shine,
+  .animate-card-reveal { animation: none; }
   .apivue-flow-packet,
-  .apivue-core {
-    animation: none !important;
-  }
+  .apivue-core { animation: none !important; }
+  .interactive:hover { transform: none; }
 }
