@@ -3,14 +3,11 @@ import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 
 /**
- * APIVue is currently deployed as a GitHub Pages project site at
- * https://chethan-ultimax.github.io/APIVue/.
- *
- * Keep the base path explicit for Pages while allowing local development
- * to continue using `/`. React Router derives its basename from this value.
+ * APIVue uses the repository sub-path on GitHub Pages and the root path on
+ * Vercel/other hosts. React Router derives its basename from this value.
  */
 export default defineConfig(({ command }) => ({
-  base: command === 'build' ? '/APIVue/' : '/',
+  base: command === 'build' && !process.env.VERCEL ? '/APIVue/' : '/',
 
   server: {
     host: '::',
