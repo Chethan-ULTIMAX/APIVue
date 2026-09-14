@@ -237,7 +237,7 @@ function KeyMetricCard({
   tone,
 }: {
   label: string;
-  value: number;
+  value: number | null;
   icon: React.ElementType;
   tone: string;
 }) {
@@ -252,7 +252,7 @@ function KeyMetricCard({
           </div>
         </div>
         <p className="mt-3 text-2xl font-black tabular-nums sm:text-3xl">
-          <CountUp value={value} />
+           {value === null ? '—' : <CountUp value={value} />}
         </p>
         <p className="mt-0.5 text-[11px] text-muted-foreground">{label}</p>
       </CardContent>
@@ -452,7 +452,7 @@ function CategoryCard({
             {group.title}
           </p>
           <h3 className="mt-1 text-2xl font-bold">
-            {sourceProfiles.length ? formatNumber(total) : '0'}
+             {sourceProfiles.length ? formatNumber(total) : '—'}
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
             {sourceProfiles.length ? 'returned activity' : 'connected sources'}
@@ -596,32 +596,31 @@ export function OverviewView() {
   );
 
   // Key metrics from real data
-  const totalRepos = profiles
-    .filter((p) => p.platform === 'github')
-    .reduce((sum, p) => {
+  const githubProfiles = profiles.filter((p) => p.platform === 'github');
+  const totalRepos = githubProfiles.reduce<number | null>((sum, p) => {
       const repoMetric = numericMetrics(p).find((m) => m.key === 'public_repos' || m.key === 'repository_total');
-      return sum + (repoMetric?.value ?? 0);
-    }, 0);
-  const totalFollowers = profiles
-    .filter((p) => p.platform === 'github')
-    .reduce((sum, p) => {
+      if (!repoMetric) return sum;
+      return (sum ?? 0) + repoMetric.value;
+    }, null);
+  const totalFollowers = githubProfiles.reduce<number | null>((sum, p) => {
       const followersMetric = numericMetrics(p).find((m) => m.key === 'followers');
-      return sum + (followersMetric?.value ?? 0);
-    }, 0);
-  const totalProblemsSolved = profiles
-    .filter((p) => ['leetcode', 'codewars'].includes(p.platform))
-    .reduce((sum, p) => {
+      if (!followersMetric) return sum;
+      return (sum ?? 0) + followersMetric.value;
+    }, null);
+  const practiceProfiles = profiles.filter((p) => ['leetcode', 'codewars'].includes(p.platform));
+  const totalProblemsSolved = practiceProfiles.reduce<number | null>((sum, p) => {
       const solved = numericMetrics(p).find(
         (m) => m.key === 'solved_all' || m.key === 'total_completed',
       );
-      return sum + (solved?.value ?? 0);
-    }, 0);
-  const totalReputation = profiles
-    .filter((p) => p.platform === 'stackoverflow')
-    .reduce((sum, p) => {
+      if (!solved) return sum;
+      return (sum ?? 0) + solved.value;
+    }, null);
+  const stackOverflowProfiles = profiles.filter((p) => p.platform === 'stackoverflow');
+  const totalReputation = stackOverflowProfiles.reduce<number | null>((sum, p) => {
       const rep = numericMetrics(p).find((m) => m.key === 'reputation');
-      return sum + (rep?.value ?? 0);
-    }, 0);
+      if (!rep) return sum;
+      return (sum ?? 0) + rep.value;
+    }, null);
 
   if (isLoading)
     return (
@@ -675,7 +674,7 @@ export function OverviewView() {
             />
             <KeyMetricCard
               label="Followers + Reputation"
-              value={totalFollowers + totalReputation}
+              value={totalFollowers === null && totalReputation === null ? null : (totalFollowers ?? 0) + (totalReputation ?? 0)}
               icon={Sparkles}
               tone={toneClasses.emerald}
             />

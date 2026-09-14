@@ -1,0 +1,1019 @@
+You are the lead product designer and senior React/TypeScript engineer for APIVue.
+
+The EXISTING APIVue repository is already connected to this project.
+
+Your task is to COMPLETE AND POLISH THE ENTIRE EXISTING APIVue APPLICATION IN PLACE.
+
+Do not rebuild it from scratch.
+
+Do not replace the existing architecture.
+
+Do not create a separate demo.
+
+Do not create mock functionality.
+
+The final result must be the actual APIVue application, using the existing real data architecture, ready for me to push to GitHub.
+
+============================================================
+1. UNDERSTAND THE EXISTING PROJECT FIRST
+============================================================
+
+Before making changes, inspect the existing repository and understand:
+
+- React 18
+- Vite
+- TypeScript
+- Tailwind/shadcn-style UI
+- React Router
+- TanStack Query
+- Recharts
+- Lucide
+- Supabase/authentication
+- existing provider integrations
+- existing normalized data models
+- existing feature views
+- existing hooks/services
+- existing DashboardLayout
+- existing AppSidebar
+- existing APIVueSignature
+- existing CountUp
+- existing analytics helpers
+- existing loading/error/empty handling
+
+IMPORTANT:
+
+Reuse what already exists.
+
+Do not create duplicate versions of existing functionality.
+
+Do not replace working components merely because you prefer another implementation.
+
+============================================================
+2. ABSOLUTE DATA RULES
+============================================================
+
+This is critical.
+
+APIVue must use REAL DATA ONLY.
+
+Never create:
+
+- fake users
+- fake profiles
+- fake followers
+- fake repositories
+- fake contributions
+- fake activity
+- fake chart points
+- fake historical snapshots
+- fake AI results
+- fake scores
+- fake percentages
+- fake progress
+- fake provider statistics
+
+If data is unavailable, display an intentional empty/unavailable state.
+
+Examples:
+
+"No data available"
+
+"Connect GitHub to unlock this"
+
+"Public profile data unavailable"
+
+"Not enough historical data yet"
+
+NEVER use 0 as a replacement for missing data when 0 is not actually known.
+
+Do not modify:
+
+- provider APIs
+- Supabase architecture
+- authentication
+- normalized data models
+- server routes
+- existing provider fetchers
+- provider normalization
+- routing contracts
+
+unless a tiny frontend compatibility fix is absolutely required.
+
+Do not bypass provider rate limits.
+
+Do not re-add PortSwigger.
+
+Existing supported platforms:
+
+VERIFIED:
+
+- GitHub
+- Codeforces
+
+PUBLIC DATA:
+
+- LeetCode
+- Codewars
+- Stack Overflow
+- TryHackMe
+- Hack The Box
+
+Maintain the distinction between verified and public data.
+
+============================================================
+3. PRODUCT VISION
+============================================================
+
+APIVue should feel like a premium developer intelligence platform.
+
+Core idea:
+
+"One unified view of your developer identity, activity, skills, progress and platforms."
+
+It should feel:
+
+- technical
+- intelligent
+- premium
+- modern
+- trustworthy
+- data-driven
+- clean
+- fast
+
+It should NOT look like:
+
+- a generic admin dashboard
+- a template
+- a crypto dashboard
+- an overly flashy AI website
+- a collection of unrelated cards
+
+Every page must feel like part of the same product.
+
+============================================================
+4. GLOBAL DESIGN SYSTEM
+============================================================
+
+Create a consistent APIVue visual system across the entire application.
+
+Use:
+
+- excellent typography
+- strong hierarchy
+- consistent spacing
+- rounded cards
+- subtle borders
+- restrained shadows
+- consistent icons
+- consistent badges
+- consistent buttons
+- consistent page headers
+- consistent empty states
+- consistent skeletons
+- consistent error states
+
+Cards should feel premium without excessive glassmorphism.
+
+Use subtle:
+
+- gradients
+- borders
+- hover elevation
+- background transitions
+- glow accents
+- transforms
+- opacity transitions
+
+Do not put huge gradients everywhere.
+
+Do not make everything glow.
+
+Reserve stronger visual effects for important areas.
+
+============================================================
+5. LIGHT + DARK MODE
+============================================================
+
+Make both themes intentionally designed.
+
+LIGHT MODE:
+
+- clean
+- bright
+- GitHub-inspired
+- excellent readability
+
+DARK MODE:
+
+- premium developer/security-tool feeling
+- deep surfaces
+- subtle borders
+- readable charts
+- restrained accent glow
+
+Do not simply invert the light theme.
+
+Check:
+
+- cards
+- text
+- charts
+- badges
+- buttons
+- inputs
+- sidebar
+- tooltips
+- dialogs
+- focus states
+
+in BOTH themes.
+
+============================================================
+6. MOTION SYSTEM
+============================================================
+
+APIVue should feel alive.
+
+Use tasteful animations throughout the application.
+
+Include:
+
+- page entrance
+- section reveal
+- staggered cards
+- hover transitions
+- button micro-interactions
+- animated counters
+- animated progress bars
+- chart entrance
+- tab transitions
+- dropdown transitions
+- tooltip transitions
+- modal transitions
+- navigation active-state transitions
+
+Card hover:
+
+- tiny upward movement
+- subtle border emphasis
+- slight elevation
+- content/icon response
+
+Keep it subtle.
+
+Do not use excessive bouncing.
+
+Do not make the application distracting.
+
+Use CSS transforms and opacity where possible.
+
+Respect:
+
+prefers-reduced-motion
+
+============================================================
+7. APIVUE SIGNATURE ANIMATION
+============================================================
+
+APIVue must have a recognizable visual signature.
+
+Enhance the existing APIVueSignature rather than replacing it unnecessarily.
+
+Visual concept:
+
+GitHub
+Codeforces
+LeetCode
+Codewars
+Stack Overflow
+TryHackMe
+Hack The Box
+
+        ↓
+
+     APIVue CORE
+
+        ↓
+
+Normalized Data
+
+        ↓
+
+Analytics
+
+        ↓
+
+Insights
+
+Create an elegant animated data-flow network.
+
+Use:
+
+- platform nodes
+- connecting lines
+- flowing packets
+- subtle pulses
+- central APIVue core
+- animated output nodes
+
+It should continuously animate while the page is open.
+
+Keep it lightweight.
+
+Do not use JavaScript animation loops if CSS animation can accomplish the effect.
+
+Support reduced motion.
+
+Make it responsive.
+
+This should become one of APIVue's signature visual elements.
+
+============================================================
+8. APPLICATION SHELL
+============================================================
+
+Polish DashboardLayout.
+
+Desktop:
+
+- elegant sidebar
+- clear navigation groups
+- animated active state
+- page header/breadcrumb
+- responsive content container
+- theme control
+- user area
+
+Mobile:
+
+- polished drawer/menu
+- responsive header
+- no horizontal overflow
+- accessible controls
+
+Use the existing routes.
+
+Suggested conceptual grouping:
+
+OVERVIEW
+Dashboard / Analyze
+
+DEVELOPER
+Profiles
+Explore
+Compare
+
+INTELLIGENCE
+Analytics
+Progress
+AI Insights
+Goals
+
+PLATFORMS
+Integrations
+
+ACCOUNT
+Settings
+
+Do not create duplicate routes.
+
+============================================================
+9. SIDEBAR
+============================================================
+
+Improve AppSidebar.
+
+Include:
+
+- APIVue branding
+- grouped navigation
+- animated active indicator
+- icons
+- platform signal/connection area
+- user footer
+- theme control where appropriate
+
+Active navigation should have a subtle animated rail/background.
+
+Hover states should feel polished.
+
+Keyboard focus must remain visible.
+
+============================================================
+10. OVERVIEW / DASHBOARD
+============================================================
+
+Make Overview the flagship authenticated experience.
+
+Top section:
+
+Developer identity header.
+
+Show only real data:
+
+- avatar
+- name
+- username
+- bio
+- verified state
+- connected platforms
+- website/location if available
+
+Then organize:
+
+1. Developer Activity
+2. Platform Coverage
+3. Contributions
+4. Technologies
+5. Recent Activity
+6. Progress
+7. Snapshot Changes
+8. AI Insights
+9. APIVue Signature
+
+Use the existing CountUp component where meaningful.
+
+Use real analytics.
+
+Make important metrics visually prominent.
+
+Do not fill empty areas with fake statistics.
+
+============================================================
+11. PROFILES
+============================================================
+
+Make profile pages feel like complete developer identity pages.
+
+Profile header:
+
+- avatar
+- subtle animated ring
+- name
+- username
+- bio
+- provider badges
+- verified indicators
+- public links
+
+Sections:
+
+Identity
+Platforms
+Activity
+Technologies
+Contributions
+History
+Insights
+
+Make profile pages responsive.
+
+Use real provider data.
+
+Create excellent empty states.
+
+Add tasteful hover interactions.
+
+============================================================
+12. ANALYZE
+============================================================
+
+If Analyze exists separately from Overview, make it feel like a developer intelligence workspace.
+
+Show:
+
+- real activity
+- platform coverage
+- technology signals
+- contribution signals
+- historical changes
+- meaningful derived analytics
+- AI interpretation where available
+
+Clearly distinguish:
+
+RAW DATA
+
+DERIVED ANALYTICS
+
+AI INTERPRETATION
+
+RECOMMENDATION
+
+Never present an arbitrary score as objective truth.
+
+============================================================
+13. PROGRESS / HISTORY
+============================================================
+
+Make Progress feel like a developer growth timeline.
+
+Include:
+
+- historical snapshots
+- real deltas
+- activity progression
+- platform changes
+- milestones where real data supports them
+- filters
+- time ranges
+
+Use:
+
+- timeline
+- nodes
+- progressive lines
+- milestone cards
+
+Animate the timeline subtly.
+
+If insufficient history exists:
+
+Show a beautiful explanation instead of inventing history.
+
+============================================================
+14. ANALYTICS
+============================================================
+
+Make Analytics a serious analytics product.
+
+Sections:
+
+ACTIVITY
+
+- activity trends
+- contributions/activity
+- platform activity
+
+TECHNOLOGY
+
+- languages
+- technologies
+- distribution
+
+PLATFORMS
+
+- platform coverage
+- contribution/activity by platform
+
+GROWTH
+
+- snapshot changes
+- historical trends
+
+CONSISTENCY
+
+- patterns only when enough real data exists
+
+Every chart must answer a useful question.
+
+Use Recharts where already available.
+
+Improve:
+
+- tooltips
+- legends
+- axes
+- responsive containers
+- chart animations
+- filters
+- empty states
+
+Clearly label derived metrics.
+
+Do not fabricate data just to make charts look full.
+
+============================================================
+15. COMPARE
+============================================================
+
+Make Compare a premium two-profile comparison tool.
+
+Layout:
+
+Profile A        VS        Profile B
+
+Compare:
+
+- identity
+- platforms
+- activity
+- contributions
+- technologies
+- trends
+- shared technologies
+- differences
+- data availability
+
+Missing data is NOT zero.
+
+Use:
+
+Unavailable
+Not connected
+No public data
+
+when necessary.
+
+Do not say someone is objectively "better".
+
+Use evidence-based comparison.
+
+Create:
+
+- side-by-side cards
+- comparison bars
+- difference indicators
+- shared technology section
+- platform overlap
+
+Make it excellent on mobile too.
+
+============================================================
+16. EXPLORE
+============================================================
+
+Make Explore feel like a developer discovery platform.
+
+Strong search experience:
+
+- search field
+- filters
+- platform filtering
+- results
+- profile preview
+
+Profile cards:
+
+- avatar
+- identity
+- platform badges
+- technologies if real
+- activity signals if real
+- quick-open action
+
+States:
+
+Initial
+Searching
+Results
+No results
+Error
+Rate limited
+
+No fake profiles.
+
+Cards should have subtle hover motion.
+
+============================================================
+17. INTEGRATIONS
+============================================================
+
+Make Integrations one of the best pages.
+
+Clearly separate:
+
+VERIFIED CONNECTIONS
+
+GitHub
+Codeforces
+
+PUBLIC PROFILE DATA
+
+LeetCode
+Codewars
+Stack Overflow
+TryHackMe
+Hack The Box
+
+Each card should communicate:
+
+- platform
+- description
+- connection type
+- status
+- verified/public state
+- identifier
+- sync/fetch state
+- last successful sync when actually known
+- retry action
+- public profile action
+
+Do not falsely claim OAuth.
+
+TryHackMe:
+
+Handle 429/rate-limit states gracefully.
+
+Never bypass limits.
+
+Hack The Box:
+
+Only show real platform-provided data.
+
+============================================================
+18. AI INSIGHTS
+============================================================
+
+Make AI Insights trustworthy.
+
+Sections:
+
+- Strengths
+- Areas to improve
+- Recent changes
+- Activity patterns
+- Platform opportunities
+- Technology trends
+- Next actions
+- Goal recommendations
+- Anomalies
+
+Clearly label:
+
+FACT
+
+INTERPRETATION
+
+RECOMMENDATION
+
+If AI is unavailable, use the existing deterministic fallback.
+
+Never fabricate an AI response.
+
+============================================================
+19. GOALS
+============================================================
+
+Make Goals integrated with the analytics system.
+
+Show:
+
+- active goals
+- completed goals
+- progress
+- deadlines
+- recommendations
+
+Where possible, calculate progress from real platform data.
+
+Use animated progress bars.
+
+Never invent progress.
+
+Completed goals can have a restrained completion animation.
+
+============================================================
+20. SETTINGS
+============================================================
+
+Polish Settings without changing existing account functionality.
+
+Make sections clear:
+
+- account
+- appearance
+- connected platforms
+- preferences
+- security/auth-related settings where already supported
+
+Do not add fake settings.
+
+============================================================
+21. SHARED STATES
+============================================================
+
+Every feature needs beautiful:
+
+LOADING
+
+Use skeletons.
+
+EMPTY
+
+Explain what is missing and how to unlock it.
+
+ERROR
+
+Explain the problem and provide retry where supported.
+
+RATE LIMITED
+
+Explain temporary provider restriction.
+
+Do not expose ugly raw stack traces.
+
+============================================================
+22. RESPONSIVE DESIGN
+============================================================
+
+Desktop:
+
+Excellent.
+
+Tablet:
+
+Excellent.
+
+Mobile:
+
+Excellent.
+
+Check:
+
+- sidebar
+- headers
+- cards
+- grids
+- charts
+- tables
+- dialogs
+- profile layouts
+- compare layout
+- integrations
+- navigation
+
+No horizontal overflow.
+
+Charts must resize properly.
+
+============================================================
+23. ACCESSIBILITY
+============================================================
+
+Preserve:
+
+- semantic HTML
+- keyboard navigation
+- focus states
+- aria labels
+- accessible buttons
+- accessible inputs
+- sufficient contrast
+- reduced motion
+
+Do not sacrifice accessibility for animations.
+
+============================================================
+24. PERFORMANCE
+============================================================
+
+Do not introduce heavyweight dependencies.
+
+Do not duplicate API requests.
+
+Do not create unnecessary polling.
+
+Avoid expensive continuous JavaScript animation.
+
+Prefer:
+
+CSS transforms
+opacity
+CSS keyframes
+
+for continuous visual effects.
+
+Reuse existing components and utilities.
+
+============================================================
+25. CODE QUALITY
+============================================================
+
+Keep the existing TypeScript architecture clean.
+
+Avoid:
+
+- any unnecessary `any`
+- duplicate components
+- duplicate provider logic
+- dead code
+- unused imports
+- fake mocks
+- temporary debug code
+- console spam
+
+Keep components maintainable.
+
+============================================================
+26. IMPORTANT: DO NOT CHANGE BACKEND
+============================================================
+
+Do NOT redesign:
+
+Supabase
+Authentication
+Provider APIs
+Provider fetchers
+Provider normalizers
+Server routes
+Normalized data models
+Existing database contracts
+
+The task is primarily:
+
+PRODUCT UI
+UX
+ANIMATION
+RESPONSIVENESS
+DATA PRESENTATION
+FRONTEND POLISH
+
+============================================================
+27. FINAL WHOLE-SITE POLISH
+============================================================
+
+After implementing the changes, go through EVERY existing route as one product.
+
+Check that:
+
+- navigation feels consistent
+- typography is consistent
+- spacing is consistent
+- cards are consistent
+- badges are consistent
+- buttons are consistent
+- animation style is consistent
+- light mode is consistent
+- dark mode is consistent
+- mobile is consistent
+- loading states are consistent
+- empty states are consistent
+- error states are consistent
+- real data remains real
+- no fake metrics were introduced
+- no PortSwigger was reintroduced
+- existing provider functionality remains intact
+
+Remove any remaining starter-template feeling.
+
+The final product should look intentionally designed, not generated from unrelated page prompts.
+
+============================================================
+28. VALIDATION
+============================================================
+
+Before declaring the work complete:
+
+- run the existing build
+- run the existing lint/type checks if available
+- fix errors introduced by your changes
+- inspect the running application
+- inspect the major routes
+- inspect light mode
+- inspect dark mode
+- inspect responsive layouts
+- inspect loading/empty/error states
+
+Do not rewrite backend/provider code just to make validation easier.
+
+============================================================
+29. GIT / FINAL STATE
+============================================================
+
+The repository is already connected to GitHub.
+
+Do NOT create a new repository.
+
+Do NOT delete the existing repository.
+
+Do NOT overwrite unrelated work.
+
+Do NOT force-push.
+
+Do NOT commit fake/demo data.
+
+When the implementation is genuinely complete and validated, prepare the repository so the finished changes can be pushed to the existing APIVue GitHub repository.
+
+Preferred final commit message:
+
+"Complete APIVue product UI and experience"
+
+If Rocket.new has direct GitHub commit/push capability, use the connected repository safely.
+
+Target repository:
+
+Chethan-ULTIMAX/APIVue
+
+Target branch:
+
+main
+
+If the platform requires a pull request instead of direct main changes, create the PR against main rather than force-pushing.
+
+============================================================
+FINAL INSTRUCTION
+============================================================
+
+Do not stop after changing one page.
+
+Complete the ENTIRE existing APIVue application.
+
+Do not waste the implementation on explanations.
+
+Spend the effort on the actual code, UI, UX, animations, responsiveness, and consistency.
+
+The finished APIVue should feel like a polished real developer-intelligence SaaS product that is ready for GitHub, deployment, and real users.
+
+START BY INSPECTING THE EXISTING APIVUE CODEBASE, THEN IMPLEMENT THE COMPLETE POLISH IN PLACE.

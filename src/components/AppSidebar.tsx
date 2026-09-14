@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Users,
   X,
+  Radio,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -72,11 +73,14 @@ export function AppSidebar({ onNavigate, onClose }: AppSidebarProps = {}) {
   const logoSrc = `${assetBase.replace(/\/$/, '')}/favicon.ico`;
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-border bg-background/95">
-      <div className="flex h-16 shrink-0 items-center justify-between border-b border-border/80 px-4">
-        <Link to="/dashboard" className="flex items-center gap-2" onClick={onNavigate}>
-          <img src={logoSrc} alt="" className="h-7 w-7 object-contain" />
-          <span className="bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-xl font-bold text-transparent">
+    <aside className="flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar/90 shadow-[8px_0_30px_-26px_hsl(var(--foreground)/.35)]">
+      <div className="flex h-20 shrink-0 items-center justify-between border-b border-sidebar-border px-4">
+        <Link to="/dashboard" className="group flex items-center gap-2.5" onClick={onNavigate}>
+          <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+            <img src={logoSrc} alt="" className="relative z-10 h-6 w-6 object-contain brightness-0 invert" />
+            <span className="absolute inset-0 bg-gradient-to-br from-white/25 to-transparent" />
+          </span>
+          <span className="bg-gradient-to-r from-foreground to-primary bg-clip-text text-xl font-black tracking-tight text-transparent">
             APIVue
           </span>
         </Link>
@@ -90,7 +94,7 @@ export function AppSidebar({ onNavigate, onClose }: AppSidebarProps = {}) {
       <nav className="flex-1 overflow-y-auto p-3 scrollbar-thin">
         {NAV_SECTIONS.map((section) => (
           <div key={section.title} className="mb-5 last:mb-0">
-            <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/60">
+            <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/55">
               {section.title}
             </p>
             <div className="space-y-1">
@@ -103,9 +107,9 @@ export function AppSidebar({ onNavigate, onClose }: AppSidebarProps = {}) {
                     to={item.href}
                     onClick={onNavigate}
                     className={cn(
-                      'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200',
+                      'focus-ring group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200',
                       active
-                        ? 'bg-primary/10 font-semibold text-primary shadow-sm'
+                        ? 'bg-primary/10 font-semibold text-primary shadow-sm before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-primary'
                         : 'text-muted-foreground hover:-translate-y-px hover:bg-accent/70 hover:text-foreground',
                     )}
                   >
@@ -120,7 +124,14 @@ export function AppSidebar({ onNavigate, onClose }: AppSidebarProps = {}) {
         ))}
       </nav>
 
-      <div className="shrink-0 border-t border-border/80 p-3">
+      <div className="shrink-0 border-t border-sidebar-border p-3">
+        <div className="mb-3 flex items-center gap-2 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.06] px-3 py-2.5">
+          <Radio className="h-3.5 w-3.5 text-emerald-500" />
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Data engine</p>
+            <p className="truncate text-[10px] text-muted-foreground">Ready for a sync</p>
+          </div>
+        </div>
         {user?.email && (
           <p className="mb-2 truncate rounded-lg bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground" title={user.email}>
             {user.email}

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Search, Sparkles } from 'lucide-react';
+import { ChevronRight, Menu, Search, Sparkles } from 'lucide-react';
 
 import { AppSidebar } from '@/components/AppSidebar';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -48,7 +48,7 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex min-h-screen w-full bg-background/95">
       {/* Desktop navigation must not receive the mobile close callback. */}
       <div className="hidden lg:flex">
         <AppSidebar />
@@ -71,7 +71,7 @@ export function DashboardLayout() {
       )}
 
       <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-border/80 bg-background/85 px-3 backdrop-blur-xl sm:px-5">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-border/80 bg-background/80 px-3 backdrop-blur-xl sm:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <Button
               variant="ghost"
@@ -82,10 +82,10 @@ export function DashboardLayout() {
             >
               <Menu className="h-4 w-4" />
             </Button>
-            <div className="hidden items-center gap-2 text-sm sm:flex">
-              <span className="font-semibold text-foreground">APIVue</span>
-              <span className="text-muted-foreground">/</span>
-              <span className="text-muted-foreground">{currentPage}</span>
+            <div className="hidden items-center gap-1.5 text-sm sm:flex">
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">core</span>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+              <span className="font-semibold text-foreground">{currentPage}</span>
             </div>
           </div>
 
@@ -108,7 +108,7 @@ export function DashboardLayout() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9"
+              className="h-9 w-9 rounded-xl"
               onClick={() => setSearchOpen((open) => !open)}
               aria-label="Search dashboard"
               title="Jump to a page"
@@ -118,7 +118,7 @@ export function DashboardLayout() {
             <Button
               variant="ghost"
               size="sm"
-              className="hidden gap-1.5 text-xs sm:flex"
+              className="hidden gap-1.5 rounded-xl text-xs sm:flex"
               onClick={() => navigate('/dashboard/ai-insights')}
             >
               <Sparkles className="h-3.5 w-3.5" />
