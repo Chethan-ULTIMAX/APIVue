@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Check, Database, RefreshCw, Sparkles, Target, ArrowRight, BarChart3, TrendingUp } from 'lucide-react';
+import { Check, Database, Info, RefreshCw, Sparkles, Target, ArrowRight, BarChart3, TrendingUp } from 'lucide-react';
 import { useTrackedProfiles } from '@/hooks/use-profiles';
 import type { PublicDataResult } from '@/lib/public-data';
 import type { TrackedProfile } from '@/lib/integrations/registry';
@@ -44,5 +44,25 @@ export function AnalyzeView() {
       <TimeRangeChart points={activity} tone="hsl(var(--primary))" title="Combined activity" subtitle="All selected sources, normalized by date. Use the same four time ranges to inspect the available evidence."/>
       <Card><CardContent className="p-5 sm:p-6"><div className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary"/><h3 className="font-bold">Cross-platform signals</h3></div><div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{selected.map((item) => <div key={item.id} className="rounded-2xl border border-border p-4"><p className="text-xs font-bold">{platformLabel(item.platform)}</p><div className="mt-3"><Signals profile={item}/></div></div>)}</div></CardContent></Card>
     </>}
+
+    {/* Methodology note */}
+    <Card className="border-border bg-card/70">
+      <CardContent className="p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <Info className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+          <div className="space-y-1.5">
+            <p className="font-semibold">How APIVue derives metrics</p>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Metrics shown with a <strong>Real returned metric</strong> label
+              come directly from the provider API. GitHub-derived metrics
+              (stars, forks, open issues) are aggregated from the repository
+              list the provider returned — they are calculated by APIVue, not
+              reported by GitHub as a single number. Every value is traceable
+              to stored data. No scores or percentages are invented.
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   </div></div>;
 }

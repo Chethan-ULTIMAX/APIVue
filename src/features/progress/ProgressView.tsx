@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import {
   ArrowRight,
+  Calendar,
   Flame,
   History,
   LineChart as LineChartIcon,
@@ -41,10 +42,29 @@ import {
   chartTooltipStyle,
 } from '@/components/apivue/ProfileBits';
 
+type RangeKey = '7d' | '30d' | '90d' | 'all';
+
+const RANGES: { key: RangeKey; label: string; days: number }[] = [
+  { key: '7d', label: '7 days', days: 7 },
+  { key: '30d', label: '30 days', days: 30 },
+  { key: '90d', label: '90 days', days: 90 },
+  { key: 'all', label: 'All time', days: 0 },
+];
+
+function filterByRange(
+  timeline: Array<{ date: string; count: number }>,
+  range: RangeKey,
+): Array<{ date: string; count: number }> {
+  if (range === 'all') return timeline;
+  const days = RANGES.find((r) => r.key === range)?.days ?? 30;
+  return timeline.slice(-days);
+}
+
 export function ProgressView() {
   const profilesQuery = useTrackedProfiles();
   const snapshotsQuery = useProfileSnapshots();
   const [addOpen, setAddOpen] = useState(false);
+  const [range, setRange] = useState<RangeKey>('30d');
 
   const profiles = profilesQuery.data ?? [];
   const snapshots = snapshotsQuery.data ?? [];
@@ -56,14 +76,13 @@ export function ProgressView() {
     [profiles, snapshots],
   );
 
+  const fullTimeline = useMemo(() => mergeActivity(profiles), [profiles]);
   const activityTimeline = useMemo(
-    () => mergeActivity(profiles).slice(-90),
-    [profiles],
+    () => filterByRange(fullTimeline, range),
+    [fullTimeline, range],
   );
 
   const topTrends = report.trends.slice(0, 6);
-
-  /* ---------- States ---------- */
 
   if (isLoading) {
     return (
@@ -83,9 +102,7 @@ export function ProgressView() {
           <p className="mb-1 text-sm font-medium text-destructive">
             Could not load your progress history
           </p>
-          <p className="mb-4 text-xs text-muted-foreground">
-            {error.message}
-          </p>
+          <p className="mb-4 text-xs text-muted-foreground">{error.message}</p>
           <Button
             size="sm"
             variant="outline"
@@ -134,11 +151,31 @@ export function ProgressView() {
   return (
     <div className="max-w-6xl space-y-8 p-4 sm:p-6">
       {/* Header */}
-      <div>
-        <h1 className="text-lg font-semibold">Progress</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {snapshotSummary}
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold">Progress</h1>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {snapshotSummary}
+          </p>
+        </div>
+        {/* Time-range filter */}
+        <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+          <Calendar className="ml-1.5 h-3.5 w-3.5 text-muted-foreground" />
+          {RANGES.map((r) => (
+            <button
+              key={r.key}
+              type="button"
+              onClick={() => setRange(r.key)}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                range === r.key
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Top-level stats */}
@@ -179,9 +216,15 @@ export function ProgressView() {
 
       {/* Activity history */}
       <section className="rounded-lg border border-border bg-card p-4 sm:p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <Flame className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold">Activity history</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Flame className="h-4 w-4 text-primary" />
+            <h2 className="text-sm font-semibold">Activity history</h2>
+          </div>
+          <span className="text-[11px] text-muted-foreground">
+            {activityTimeline.length} data point
+            {activityTimeline.length === 1 ? '' : 's'} in range
+          </span>
         </div>
 
         {activityTimeline.length > 0 ? (
@@ -237,7 +280,8 @@ export function ProgressView() {
           </ResponsiveContainer>
         ) : (
           <p className="py-8 text-center text-xs text-muted-foreground">
-            None of your connected platforms expose day-level activity yet.
+            No activity recorded in this time range. Try a wider range, or
+            refresh a connected profile to capture new data.
           </p>
         )}
       </section>
@@ -274,13 +318,11 @@ export function ProgressView() {
               return (
                 <div
                   key={`${t.profileId}-${t.metricKey}`}
-                  className="rounded-lg border border-border bg-card p-4"
+                  className="rounded-lg border border-border bg-card p-4 transition hover:shadow-md"
                 >
                   <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {t.label}
-                      </p>
+                      <p className="truncate text-sm font-medium">{t.label}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <PlatformChip platform={t.platform} />
                         <span className="truncate text-[10px] text-muted-foreground">
@@ -330,15 +372,15 @@ export function ProgressView() {
 
         {report.categoryProgress.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No areas have data yet. Connect a platform that maps to a
-            progress area to see it here.
+            No areas have data yet. Connect a platform that maps to a progress
+            area to see it here.
           </p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {report.categoryProgress.map((cat) => (
               <div
                 key={cat.category}
-                className="rounded-lg border border-border bg-card p-4"
+                className="rounded-lg border border-border bg-card p-4 transition hover:shadow-md"
               >
                 <p className="text-sm font-medium">{cat.label}</p>
                 <p className="mb-3 mt-0.5 text-xs text-muted-foreground">
@@ -353,9 +395,7 @@ export function ProgressView() {
 
                 <p className="text-[11px] text-muted-foreground">
                   {cat.trends.length > 0
-                    ? `${cat.trends.length} tracked metric${
-                        cat.trends.length === 1 ? '' : 's'
-                      } with history`
+                    ? `${cat.trends.length} tracked metric${cat.trends.length === 1 ? '' : 's'} with history`
                     : 'History still building'}
                 </p>
               </div>
@@ -376,7 +416,7 @@ export function ProgressView() {
             {report.observations.map((o) => (
               <div
                 key={o.id}
-                className="rounded-lg border border-border bg-card p-4"
+                className="rounded-lg border border-border bg-card p-4 transition hover:shadow-md"
               >
                 <p className="mb-1 text-sm font-medium">{o.title}</p>
                 <p className="text-xs leading-relaxed text-muted-foreground">
