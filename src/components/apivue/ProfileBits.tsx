@@ -64,23 +64,29 @@ export function ProfileAvatar({
   const label = profile.displayName ?? profile.display_name ?? profile.handle;
   const avatarUrl = profile.avatarUrl ?? profile.avatar_url ?? null;
 
+  const ringClass = 'p-0.5';
+
   if (avatarUrl) {
     return (
-      <img
-        src={avatarUrl}
-        alt={`${label} avatar on ${getIntegration(profile.platform).name}`}
-        loading="lazy"
-        className={`${sizeClass} shrink-0 rounded-full border border-border object-cover`}
-      />
+      <div className={`shrink-0 rounded-full bg-gradient-to-br from-primary/30 via-primary/10 to-transparent ${ringClass}`}>
+        <img
+          src={avatarUrl}
+          alt={`${label} avatar on ${getIntegration(profile.platform).name}`}
+          loading="lazy"
+          className={`${sizeClass} rounded-full border border-border object-cover`}
+        />
+      </div>
     );
   }
 
   return (
-    <div
-      className={`${sizeClass} flex shrink-0 items-center justify-center rounded-full bg-primary/15 font-semibold text-primary`}
-      title={label}
-    >
-      {initialsFrom(label)}
+    <div className={`shrink-0 rounded-full bg-gradient-to-br from-primary/30 via-primary/10 to-transparent ${ringClass}`}>
+      <div
+        className={`${sizeClass} flex items-center justify-center rounded-full border border-border bg-card font-semibold text-primary`}
+        title={label}
+      >
+        {initialsFrom(label)}
+      </div>
     </div>
   );
 }
