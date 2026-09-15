@@ -101,6 +101,25 @@ const useCursorMotion = () => {
   return { cursor, reducedMotion };
 };
 
+/**
+ * Simple standalone hook for components that only need the motion
+ * preference (not cursor tracking).
+ */
+const usePrefersReducedMotion = () => {
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handler = () => setReduced(mq.matches);
+
+    handler();
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  return reduced;
+};
+
 /* =========================================================
    DATA
 ========================================================= */
@@ -241,6 +260,122 @@ const demoSteps = [
 ];
 
 /* =========================================================
+   PIPELINE CONFIG
+   ========================================================= */
+
+/**
+ * The pipeline is drawn on an 800 x 600 grid.
+ * Each platform sits at `(x, y)` and curves toward the core at
+ * `(400, 300)` using a quadratic Bézier control point `(cx, cy)`.
+ * Control points are tuned so the curves bow outward instead of
+ * crossing each other.
+ */
+interface PipelineNode {
+  id: string;
+  label: string;
+  color: string;
+  x: number;
+  y: number;
+  cx: number;
+  cy: number;
+  icon: React.ElementType;
+  /** Base start delay (seconds) for the first particle. */
+  delay: number;
+  /** Per-node animation duration (seconds). */
+  duration: number;
+}
+
+const CORE_X = 400;
+const CORE_Y = 300;
+
+const PIPELINE_NODES: PipelineNode[] = [
+  {
+    id: 'github',
+    label: 'GitHub',
+    color: '#a371f7',
+    x: 110,
+    y: 110,
+    cx: 250,
+    cy: 190,
+    icon: Github,
+    delay: 0,
+    duration: 3.0,
+  },
+  {
+    id: 'leetcode',
+    label: 'LeetCode',
+    color: '#f0883e',
+    x: 690,
+    y: 110,
+    cx: 550,
+    cy: 190,
+    icon: Code2,
+    delay: 0.35,
+    duration: 3.2,
+  },
+  {
+    id: 'codeforces',
+    label: 'Codeforces',
+    color: '#f778ba',
+    x: 60,
+    y: 300,
+    cx: 220,
+    cy: 300,
+    icon: Trophy,
+    delay: 0.7,
+    duration: 2.8,
+  },
+  {
+    id: 'codewars',
+    label: 'Codewars',
+    color: '#f85149',
+    x: 740,
+    y: 300,
+    cx: 580,
+    cy: 300,
+    icon: Zap,
+    delay: 1.05,
+    duration: 3.1,
+  },
+  {
+    id: 'stackoverflow',
+    label: 'Stack Overflow',
+    color: '#58a6ff',
+    x: 130,
+    y: 490,
+    cx: 260,
+    cy: 410,
+    icon: BookOpen,
+    delay: 1.4,
+    duration: 3.3,
+  },
+  {
+    id: 'tryhackme',
+    label: 'TryHackMe',
+    color: '#e83030',
+    x: 670,
+    y: 490,
+    cx: 540,
+    cy: 410,
+    icon: Shield,
+    delay: 1.75,
+    duration: 3.0,
+  },
+  {
+    id: 'htb',
+    label: 'Hack The Box',
+    color: '#3fb950',
+    x: 400,
+    y: 555,
+    cx: 400,
+    cy: 440,
+    icon: Target,
+    delay: 2.1,
+    duration: 2.9,
+  },
+];
+
+/* =========================================================
    BACKGROUND
 ========================================================= */
 
@@ -249,7 +384,26 @@ const Background = () => {
 
   return (
     <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden">
-      <style>{`@keyframes ambientDrift { 0%, 100% { transform: translate3d(-8%, -4%, 0) scale(1); } 50% { transform: translate3d(8%, 5%, 0) scale(1.08); } } @media (prefers-reduced-motion: reduce) { .apivue-ambient { animation: none !important; } }`}</style>
+      <style>{`
+        @keyframes ambientDrift {
+          0%, 100% { transform: translate3d(-8%, -4%, 0) scale(1); }
+          50% { transform: translate3d(8%, 5%, 0) scale(1.08); }
+        }
+        @keyframes ambientDriftAlt {
+          0%, 100% { transform: translate3d(6%, 3%, 0) scale(1); }
+          50% { transform: translate3d(-6%, -5%, 0) scale(1.06); }
+        }
+        @keyframes bgParticleFloat {
+          0%   { transform: translateY(0) translateX(0);      opacity: 0; }
+          10%  { opacity: 0.55; }
+          90%  { opacity: 0.55; }
+          100% { transform: translateY(-140px) translateX(20px); opacity: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .apivue-ambient, .apivue-bg-particle { animation: none !important; }
+        }
+      `}</style>
+
       {/* Base */}
       <div className="absolute inset-0 bg-[#080a0f]" />
 
@@ -276,9 +430,54 @@ const Background = () => {
 
       <div
         className="absolute h-[420px] w-[420px] rounded-full bg-violet-400/[0.045] blur-[110px] transition-transform ease-out motion-reduce:transition-none"
-        style={reducedMotion ? undefined : { transform: `translate(${cursor.x * 0.035 - 150}px, ${cursor.y * 0.035 - 150}px)`, transitionDuration: '1.8s' }}
+        style={
+          reducedMotion
+            ? undefined
+            : {
+                transform: `translate(${cursor.x * 0.035 - 150}px, ${
+                  cursor.y * 0.035 - 150
+                }px)`,
+                transitionDuration: '1.8s',
+              }
+        }
       />
+
       <div className="apivue-ambient absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-cyan-400/[0.025] blur-[100px] animate-[ambientDrift_18s_ease-in-out_infinite]" />
+
+      {/* Second ambient drift for organic feel */}
+      <div className="apivue-ambient absolute right-1/4 bottom-1/4 h-64 w-64 rounded-full bg-fuchsia-500/[0.03] blur-[100px] animate-[ambientDriftAlt_24s_ease-in-out_infinite]" />
+
+      {/* Floating background particles */}
+      {!reducedMotion && (
+        <div className="absolute inset-0">
+          {Array.from({ length: 14 }).map((_, i) => {
+            const left = (i * 73) % 100;
+            const delay = (i * 1.4) % 14;
+            const duration = 12 + ((i * 3) % 10);
+            const size = 1 + (i % 3) * 0.6;
+            const colors = [
+              'rgba(167,139,250,0.6)',
+              'rgba(96,165,250,0.55)',
+              'rgba(56,189,248,0.5)',
+            ];
+            return (
+              <span
+                key={i}
+                className="apivue-bg-particle absolute rounded-full"
+                style={{
+                  left: `${left}%`,
+                  bottom: `-10px`,
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  background: colors[i % colors.length],
+                  boxShadow: `0 0 ${size * 4}px ${colors[i % colors.length]}`,
+                  animation: `bgParticleFloat ${duration}s linear ${delay}s infinite`,
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
@@ -304,7 +503,7 @@ const CursorGlow = () => {
               transparent 72%
             )
           `,
-          transition: "background 120ms ease-out",
+          transition: 'background 120ms ease-out',
         }}
       />
 
@@ -320,8 +519,8 @@ const CursorGlow = () => {
               transparent 68%
             )
           `,
-          filter: "blur(18px)",
-          transition: "background 180ms ease-out",
+          filter: 'blur(18px)',
+          transition: 'background 180ms ease-out',
         }}
       />
 
@@ -332,17 +531,17 @@ const CursorGlow = () => {
         style={{
           left: cursor.x,
           top: cursor.y,
-          width: "10px",
-          height: "10px",
-          transform: "translate(-50%, -50%)",
-          borderRadius: "9999px",
+          width: '10px',
+          height: '10px',
+          transform: 'translate(-50%, -50%)',
+          borderRadius: '9999px',
           background:
-            "radial-gradient(circle, rgba(196,181,253,0.8) 0%, rgba(139,92,246,0.28) 45%, transparent 75%)",
-          filter: "blur(2px)",
+            'radial-gradient(circle, rgba(196,181,253,0.8) 0%, rgba(139,92,246,0.28) 45%, transparent 75%)',
+          filter: 'blur(2px)',
           boxShadow:
-            "0 0 14px rgba(139,92,246,0.25), 0 0 28px rgba(99,102,241,0.12)",
+            '0 0 14px rgba(139,92,246,0.25), 0 0 28px rgba(99,102,241,0.12)',
           transition:
-            "left 70ms ease-out, top 70ms ease-out, opacity 200ms ease-out",
+            'left 70ms ease-out, top 70ms ease-out, opacity 200ms ease-out',
         }}
       />
     </>
@@ -377,7 +576,9 @@ const CursorCard = ({
     const y = (event.clientY - rect.top) / rect.height - 0.5;
 
     setStyle({
-      transform: `perspective(900px) translateY(-3px) rotateX(${y * -2}deg) rotateY(${x * 2}deg)`,
+      transform: `perspective(900px) translateY(-3px) rotateX(${
+        y * -2
+      }deg) rotateY(${x * 2}deg)`,
     });
   };
 
@@ -391,9 +592,7 @@ const CursorCard = ({
     >
       <div className="pointer-events-none absolute -inset-px rounded-[inherit] bg-gradient-to-br from-violet-400/0 via-violet-400/0 to-cyan-300/0 opacity-0 blur-xl transition-opacity duration-500 group-hover:from-violet-400/20 group-hover:via-violet-400/5 group-hover:to-cyan-300/15 group-hover:opacity-100" />
 
-      <div className="relative h-full">
-        {children}
-      </div>
+      <div className="relative h-full">{children}</div>
     </div>
   );
 };
@@ -404,12 +603,13 @@ const CursorCard = ({
 
 const Logo = () => {
   return (
-    <Link
-      to="/"
-      className="group flex items-center gap-2.5"
-    >
+    <Link to="/" className="group flex items-center gap-2.5">
       <div className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10">
-        <img src="/favicon.ico" alt="APIVue" className="h-7 w-7 object-contain transition-transform duration-300 group-hover:scale-110" />
+        <img
+          src="/favicon.ico"
+          alt="APIVue"
+          className="h-7 w-7 object-contain transition-transform duration-300 group-hover:scale-110"
+        />
       </div>
 
       <span className="text-xl font-bold tracking-tight">
@@ -466,9 +666,7 @@ const Navbar = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() =>
-              setTheme(theme === 'dark' ? 'light' : 'dark')
-            }
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="rounded-lg text-zinc-400 hover:bg-white/[0.06] hover:text-white"
           >
             {theme === 'dark' ? (
@@ -532,9 +730,7 @@ const Navbar = () => {
             </Link>
 
             <Link to="/signup">
-              <Button className="w-full">
-                Get started
-              </Button>
+              <Button className="w-full">Get started</Button>
             </Link>
           </div>
         </div>
@@ -582,9 +778,7 @@ const DashboardPreview = () => {
                 <div
                   key={item}
                   className={`h-7 rounded-md ${
-                    item === 1
-                      ? 'bg-violet-500/10'
-                      : 'bg-white/[0.025]'
+                    item === 1 ? 'bg-violet-500/10' : 'bg-white/[0.025]'
                   }`}
                 />
               ))}
@@ -630,15 +824,13 @@ const DashboardPreview = () => {
                 <div className="h-2 w-24 rounded bg-white/[0.08]" />
 
                 <div className="mt-7 flex h-20 items-end gap-2">
-                  {[35, 48, 42, 62, 54, 72, 65, 82].map(
-                    (height, index) => (
-                      <div
-                        key={index}
-                        className="flex-1 rounded-t bg-violet-500/25"
-                        style={{ height: `${height}%` }}
-                      />
-                    )
-                  )}
+                  {[35, 48, 42, 62, 54, 72, 65, 82].map((height, index) => (
+                    <div
+                      key={index}
+                      className="flex-1 rounded-t bg-violet-500/25"
+                      style={{ height: `${height}%` }}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -657,10 +849,7 @@ const DashboardPreview = () => {
 
               <div className="space-y-2">
                 {[1, 2, 3].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-center gap-2"
-                  >
+                  <div key={item} className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-violet-400/50" />
                     <div className="h-1.5 w-40 rounded bg-white/[0.06]" />
                     <div className="ml-auto h-1.5 w-10 rounded bg-white/[0.04]" />
@@ -682,8 +871,8 @@ const DashboardPreview = () => {
               </h3>
 
               <p className="mt-1 max-w-xs text-xs leading-relaxed text-zinc-500">
-                Connect your accounts to unlock your real progress,
-                history and AI insights.
+                Connect your accounts to unlock your real progress, history
+                and AI insights.
               </p>
 
               <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-zinc-600">
@@ -694,6 +883,343 @@ const DashboardPreview = () => {
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+/* =========================================================
+   DATA PIPELINE (the animated hero)
+========================================================= */
+
+const DataPipeline = () => {
+  const reducedMotion = usePrefersReducedMotion();
+
+  return (
+    <div className="relative mx-auto w-full max-w-5xl">
+      {/* Ambient glow behind the whole pipeline */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+      >
+        <div className="absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/[0.09] blur-[120px]" />
+        <div className="absolute left-1/4 top-1/3 h-72 w-72 rounded-full bg-blue-500/[0.05] blur-[100px]" />
+        <div className="absolute right-1/4 bottom-1/3 h-72 w-72 rounded-full bg-fuchsia-500/[0.05] blur-[100px]" />
+      </div>
+
+      <div className="relative aspect-[4/3] w-full sm:aspect-[16/10]">
+        {/* SVG layer: paths + particles + core */}
+        <svg
+          viewBox="0 0 800 600"
+          className="absolute inset-0 h-full w-full"
+          aria-hidden="true"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <defs>
+            {/* Core glow */}
+            <radialGradient id="apivueCoreGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#a371f7" stopOpacity="0.55" />
+              <stop offset="45%" stopColor="#7c3aed" stopOpacity="0.18" />
+              <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
+            </radialGradient>
+
+            {/* Core ring gradient */}
+            <linearGradient id="apivueCoreRing" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#a371f7" />
+              <stop offset="45%" stopColor="#7c3aed" />
+              <stop offset="100%" stopColor="#38bdf8" />
+            </linearGradient>
+
+            {/* Particle glow filter */}
+            <filter
+              id="apivueParticleGlow"
+              x="-80%"
+              y="-80%"
+              width="260%"
+              height="260%"
+            >
+              <feGaussianBlur stdDeviation="2.4" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            {/* Soft node shadow */}
+            <filter
+              id="apivueSoftShadow"
+              x="-50%"
+              y="-50%"
+              width="200%"
+              height="200%"
+            >
+              <feGaussianBlur stdDeviation="6" />
+            </filter>
+          </defs>
+
+          {/* ============ CONNECTION PATHS + PARTICLES ============ */}
+
+          {PIPELINE_NODES.map((node) => {
+            const pathD = `M ${node.x},${node.y} Q ${node.cx},${node.cy} ${CORE_X},${CORE_Y}`;
+
+            return (
+              <g key={node.id}>
+                {/* Static base path */}
+                <path
+                  d={pathD}
+                  fill="none"
+                  stroke={node.color}
+                  strokeOpacity="0.14"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                />
+
+                {/* Glow path (very subtle) */}
+                <path
+                  d={pathD}
+                  fill="none"
+                  stroke={node.color}
+                  strokeOpacity="0.08"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  filter="url(#apivueSoftShadow)"
+                />
+
+                {/* Animated dash trail — "data flowing" */}
+                <path
+                  d={pathD}
+                  fill="none"
+                  stroke={node.color}
+                  strokeOpacity="0.55"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeDasharray="3 10"
+                >
+                  {!reducedMotion && (
+                    <animate
+                      attributeName="stroke-dashoffset"
+                      from="0"
+                      to="-26"
+                      dur="1.6s"
+                      repeatCount="indefinite"
+                    />
+                  )}
+                </path>
+
+                {/* Particles — two per node with staggered timing */}
+                {!reducedMotion &&
+                  [0, 1].map((i) => {
+                    const beginTime = node.delay + i * (node.duration * 0.5);
+                    const dur = node.duration;
+                    return (
+                      <circle
+                        key={i}
+                        r="3.2"
+                        fill={node.color}
+                        filter="url(#apivueParticleGlow)"
+                      >
+                        <animateMotion
+                          dur={`${dur}s`}
+                          begin={`${beginTime}s`}
+                          repeatCount="indefinite"
+                          path={pathD}
+                          calcMode="spline"
+                          keyTimes="0;1"
+                          keySplines="0.5 0 0.5 1"
+                        />
+                        <animate
+                          attributeName="opacity"
+                          values="0;1;1;0"
+                          keyTimes="0;0.15;0.85;1"
+                          dur={`${dur}s`}
+                          begin={`${beginTime}s`}
+                          repeatCount="indefinite"
+                        />
+                        <animate
+                          attributeName="r"
+                          values="1.8;3.2;3.2;1.8"
+                          keyTimes="0;0.15;0.85;1"
+                          dur={`${dur}s`}
+                          begin={`${beginTime}s`}
+                          repeatCount="indefinite"
+                        />
+                      </circle>
+                    );
+                  })}
+              </g>
+            );
+          })}
+
+          {/* ============ CORE ============ */}
+
+          {/* Big soft glow */}
+          <circle
+            cx={CORE_X}
+            cy={CORE_Y}
+            r="130"
+            fill="url(#apivueCoreGlow)"
+          />
+
+          {/* Expanding pulse rings */}
+          {!reducedMotion && (
+            <>
+              <circle
+                cx={CORE_X}
+                cy={CORE_Y}
+                r="70"
+                fill="none"
+                stroke="url(#apivueCoreRing)"
+                strokeWidth="1.2"
+                strokeOpacity="0.6"
+              >
+                <animate
+                  attributeName="r"
+                  values="70;115;70"
+                  dur="4s"
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="stroke-opacity"
+                  values="0.6;0;0.6"
+                  dur="4s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+
+              <circle
+                cx={CORE_X}
+                cy={CORE_Y}
+                r="70"
+                fill="none"
+                stroke="url(#apivueCoreRing)"
+                strokeWidth="1.2"
+                strokeOpacity="0.4"
+              >
+                <animate
+                  attributeName="r"
+                  values="70;115;70"
+                  dur="4s"
+                  begin="2s"
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="stroke-opacity"
+                  values="0.4;0;0.4"
+                  dur="4s"
+                  begin="2s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+            </>
+          )}
+
+          {/* Solid core ring */}
+          <circle
+            cx={CORE_X}
+            cy={CORE_Y}
+            r="62"
+            fill="#0d1117"
+            fillOpacity="0.92"
+            stroke="url(#apivueCoreRing)"
+            strokeWidth="1.8"
+          />
+
+          {/* Inner core ring (subtle) */}
+          <circle
+            cx={CORE_X}
+            cy={CORE_Y}
+            r="50"
+            fill="none"
+            stroke="url(#apivueCoreRing)"
+            strokeWidth="0.8"
+            strokeOpacity="0.4"
+          />
+        </svg>
+
+        {/* ============ NODES (HTML overlay for crisp icons) ============ */}
+
+        {PIPELINE_NODES.map((node) => {
+          const Icon = node.icon;
+          const leftPct = (node.x / 800) * 100;
+          const topPct = (node.y / 600) * 100;
+
+          return (
+            <div
+              key={node.id}
+              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+              style={{
+                left: `${leftPct}%`,
+                top: `${topPct}%`,
+                animation: reducedMotion
+                  ? undefined
+                  : `pipelineNodeFloat 6s ease-in-out ${node.delay}s infinite`,
+              }}
+            >
+              <div
+                className="relative flex items-center gap-2 rounded-xl border bg-[#0d1117]/90 px-3 py-2 backdrop-blur-md"
+                style={{
+                  borderColor: `${node.color}55`,
+                  boxShadow: `0 0 20px ${node.color}22, inset 0 0 12px ${node.color}10`,
+                }}
+              >
+                <span
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                  style={{
+                    backgroundColor: `${node.color}18`,
+                    color: node.color,
+                  }}
+                >
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="whitespace-nowrap text-[11px] font-medium text-zinc-200 sm:text-xs">
+                  {node.label}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* ============ CORE LABEL (HTML, on top) ============ */}
+
+        <div
+          className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
+          style={{
+            animation: reducedMotion
+              ? undefined
+              : 'pipelineCorePulse 3.6s ease-in-out infinite',
+          }}
+        >
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-400/40 bg-[#0d1117] shadow-[0_0_40px_rgba(139,92,246,0.35)]">
+            <img
+              src="/favicon.ico"
+              alt="APIVue"
+              className="h-9 w-9 object-contain"
+            />
+          </div>
+          <span className="mt-2 text-xs font-semibold tracking-tight text-white">
+            APIVue Core
+          </span>
+        </div>
+      </div>
+
+      {/* ============ INLINE KEYFRAMES ============ */}
+
+      <style>{`
+        @keyframes pipelineNodeFloat {
+          0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+          50%      { transform: translate(-50%, -50%) translateY(-4px); }
+        }
+        @keyframes pipelineCorePulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); }
+          50%      { transform: translate(-50%, -50%) scale(1.035); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pipeline-anim,
+          [style*="pipelineNodeFloat"],
+          [style*="pipelineCorePulse"] {
+            animation: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
@@ -780,12 +1306,8 @@ const DemoModal = ({
                       key={label}
                       className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-3"
                     >
-                      <div className="text-[9px] text-zinc-600">
-                        {label}
-                      </div>
-                      <div className="mt-1 text-xl font-bold">
-                        {value}
-                      </div>
+                      <div className="text-[9px] text-zinc-600">{label}</div>
+                      <div className="mt-1 text-xl font-bold">{value}</div>
                       <div className="mt-1 text-[9px] text-emerald-500">
                         +8.4%
                       </div>
@@ -860,9 +1382,7 @@ const DemoModal = ({
                     key={index}
                     onClick={() => setStep(index)}
                     className={`h-1.5 flex-1 rounded-full transition ${
-                      index === step
-                        ? 'bg-violet-400'
-                        : 'bg-white/[0.08]'
+                      index === step ? 'bg-violet-400' : 'bg-white/[0.08]'
                     }`}
                   />
                 ))}
@@ -871,9 +1391,7 @@ const DemoModal = ({
               <div className="flex items-center justify-between">
                 <Button
                   variant="outline"
-                  onClick={() =>
-                    setStep(Math.max(0, step - 1))
-                  }
+                  onClick={() => setStep(Math.max(0, step - 1))}
                   disabled={step === 0}
                   className="gap-2"
                 >
@@ -891,12 +1409,7 @@ const DemoModal = ({
                 ) : (
                   <Button
                     onClick={() =>
-                      setStep(
-                        Math.min(
-                          demoSteps.length - 1,
-                          step + 1
-                        )
-                      )
+                      setStep(Math.min(demoSteps.length - 1, step + 1))
                     }
                     className="gap-2 transition-[transform,box-shadow] duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-violet-500/10"
                   >
@@ -917,11 +1430,7 @@ const DemoModal = ({
    HERO
 ========================================================= */
 
-const Hero = ({
-  onDemo,
-}: {
-  onDemo: () => void;
-}) => {
+const Hero = ({ onDemo }: { onDemo: () => void }) => {
   const reveal = useReveal();
 
   return (
@@ -944,118 +1453,73 @@ const Hero = ({
             <h1 className="mt-7 max-w-3xl text-5xl font-bold leading-[1.05] tracking-[-0.04em] text-white sm:text-6xl lg:text-[68px]">
               Your work.
               <br />
-
               <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-orange-300 bg-clip-text text-transparent">
                 One intelligence layer.
               </span>
             </h1>
 
             <p className="mt-7 max-w-xl text-base leading-8 text-zinc-400 sm:text-lg">
-              APIVue brings your development, DSA, cybersecurity,
-              learning and project activity together — then turns
-              your history into insights about where you are and
-              what you should do next.
+              APIVue brings your development, DSA, cybersecurity, learning
+              and project activity together — then turns your history into
+              insights about where you are and what you should do next.
             </p>
 
             {/* ==================== ACTION BUTTONS ==================== */}
             <div className="mt-9 flex flex-wrap gap-3">
-              {/* Start Tracking */}
               <Link to="/signup">
                 <Button
                   size="lg"
                   className="
-                    h-12 gap-2
-                    bg-white
-                    px-6
-                    text-black
-                    transition-[transform,box-shadow]
-                    duration-300
-                    hover:scale-[1.02]
-                    hover:bg-zinc-200
-                    hover:shadow-lg
-                    hover:shadow-white/10
+                    h-12 gap-2 bg-white px-6 text-black
+                    transition-[transform,box-shadow] duration-300
+                    hover:scale-[1.02] hover:bg-zinc-200
+                    hover:shadow-lg hover:shadow-white/10
                   "
                 >
                   Start tracking
-
                   <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
               </Link>
 
-              {/* Interactive Demo */}
               <Button
                 size="lg"
                 variant="outline"
                 onClick={onDemo}
                 className="
-                  group
-                  relative
-                  h-12
-                  gap-2
-                  overflow-hidden
-                  border-white/[0.10]
-                  bg-white/[0.02]
-                  px-6
-                  transition-[transform,box-shadow,background-color]
-                  duration-300
-                  hover:scale-[1.02]
-                  hover:bg-white/[0.06]
-                  hover:shadow-lg
-                  hover:shadow-violet-500/10
+                  group relative h-12 gap-2 overflow-hidden
+                  border-white/[0.10] bg-white/[0.02] px-6
+                  transition-[transform,box-shadow,background-color] duration-300
+                  hover:scale-[1.02] hover:bg-white/[0.06]
+                  hover:shadow-lg hover:shadow-violet-500/10
                 "
               >
-                {/* Periodic diagonal shine */}
                 <span
                   aria-hidden="true"
                   className="
-                    pointer-events-none
-                    absolute
-                    inset-0
-                    -translate-x-[130%]
-                    skew-x-[-20deg]
-                    bg-gradient-to-r
-                    from-transparent
-                    via-white/30
-                    to-transparent
-                    animate-demo-shine
+                    pointer-events-none absolute inset-0 -translate-x-[130%]
+                    skew-x-[-20deg] bg-gradient-to-r from-transparent
+                    via-white/30 to-transparent animate-demo-shine
                   "
                 />
 
-                {/* Soft hover glow */}
                 <span
                   aria-hidden="true"
                   className="
-                    pointer-events-none
-                    absolute
-                    inset-0
-                    rounded-[inherit]
-                    opacity-0
-                    shadow-[inset_0_0_18px_rgba(139,92,246,0.12)]
-                    transition-opacity
-                    duration-300
-                    group-hover:opacity-100
+                    pointer-events-none absolute inset-0 rounded-[inherit]
+                    opacity-0 shadow-[inset_0_0_18px_rgba(139,92,246,0.12)]
+                    transition-opacity duration-300 group-hover:opacity-100
                   "
                 />
 
-                {/* Icon */}
                 <Sparkles
                   className="
-                    relative
-                    z-10
-                    h-4
-                    w-4
-                    text-violet-400
-                    transition-transform
-                    duration-300
-                    group-hover:rotate-12
-                    group-hover:scale-110
+                    relative z-10 h-4 w-4 text-violet-400
+                    transition-transform duration-300
+                    group-hover:rotate-12 group-hover:scale-110
                   "
                 />
 
-                {/* Text */}
-                <span className="relative z-10">
-                  See interactive demo
-                </span>
+                <span className="relative z-10">See interactive demo</span>
               </Button>
             </div>
 
@@ -1099,16 +1563,17 @@ const Hero = ({
 };
 
 /* =========================================================
-   INTEGRATIONS
+   INTEGRATIONS (with animated pipeline)
 ========================================================= */
 
 const Integrations = () => {
   const reveal = useReveal();
+  const pipelineReveal = useReveal();
 
   return (
     <section
       id="integrations"
-      className="border-y border-white/[0.06] bg-white/[0.015]"
+      className="relative border-y border-white/[0.06] bg-white/[0.015]"
     >
       <div
         ref={reveal.ref}
@@ -1124,12 +1589,21 @@ const Integrations = () => {
           </h2>
 
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-zinc-500">
-            APIVue is designed to bring the activity you already
-            create across your favourite platforms into one place.
+            APIVue is designed to bring the activity you already create
+            across your favourite platforms into one place.
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+        {/* ==================== ANIMATED PIPELINE ==================== */}
+        <div
+          ref={pipelineReveal.ref}
+          className={`${pipelineReveal.className} mt-16`}
+        >
+          <DataPipeline />
+        </div>
+
+        {/* ==================== INTEGRATION CHIP GRID ==================== */}
+        <div className="mt-16 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
           {integrations.map((item, index) => {
             const Icon = item.icon;
 
@@ -1190,9 +1664,8 @@ const Platform = () => {
             </h2>
 
             <p className="mt-5 max-w-md text-sm leading-7 text-zinc-500">
-              Most platforms show you what happened on that
-              platform. APIVue is designed to understand the
-              bigger picture.
+              Most platforms show you what happened on that platform.
+              APIVue is designed to understand the bigger picture.
             </p>
 
             <div className="mt-8 rounded-xl border border-violet-500/10 bg-violet-500/[0.03] p-5">
@@ -1205,8 +1678,8 @@ const Platform = () => {
                   </div>
 
                   <p className="mt-2 text-xs leading-6 text-zinc-500">
-                    APIVue is built around your activity over
-                    time, not just today's snapshot.
+                    APIVue is built around your activity over time, not just
+                    today's snapshot.
                   </p>
                 </div>
               </div>
@@ -1302,8 +1775,8 @@ const Intelligence = () => {
           </h2>
 
           <p className="mt-4 text-sm leading-7 text-zinc-500">
-            APIVue isn't meant to be a prettier collection of
-            statistics. The goal is to understand your trajectory.
+            APIVue isn't meant to be a prettier collection of statistics. The
+            goal is to understand your trajectory.
           </p>
         </div>
 
@@ -1324,9 +1797,7 @@ const Intelligence = () => {
                   <Icon className="h-5 w-5 text-violet-400" />
                 </div>
 
-                <h3 className="mt-6 text-lg font-semibold">
-                  {item.title}
-                </h3>
+                <h3 className="mt-6 text-lg font-semibold">{item.title}</h3>
 
                 <p className="mt-3 text-sm leading-7 text-zinc-500">
                   {item.description}
@@ -1397,8 +1868,8 @@ const HowItWorks = () => {
             </h2>
 
             <p className="mt-5 max-w-md text-sm leading-7 text-zinc-500">
-              You keep doing the work. APIVue handles the difficult
-              part of connecting the dots.
+              You keep doing the work. APIVue handles the difficult part of
+              connecting the dots.
             </p>
           </div>
 
@@ -1419,9 +1890,7 @@ const HowItWorks = () => {
                     <Icon className="h-4 w-4 text-zinc-700 transition-colors group-hover:text-violet-400" />
                   </div>
 
-                  <h3 className="mt-8 font-semibold">
-                    {step.title}
-                  </h3>
+                  <h3 className="mt-8 font-semibold">{step.title}</h3>
 
                   <p className="mt-2 text-xs leading-6 text-zinc-500">
                     {step.description}
@@ -1464,8 +1933,8 @@ const CTA = () => {
             </h2>
 
             <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-zinc-500">
-              Build a complete picture of your technical and
-              personal progress with APIVue.
+              Build a complete picture of your technical and personal
+              progress with APIVue.
             </p>
 
             <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -1509,9 +1978,8 @@ const Footer = () => {
             <Logo />
 
             <p className="mt-4 max-w-sm text-xs leading-6 text-zinc-600">
-              APIVue is a personal progress intelligence platform
-              designed to turn scattered activity into useful
-              understanding.
+              APIVue is a personal progress intelligence platform designed to
+              turn scattered activity into useful understanding.
             </p>
           </div>
 
@@ -1521,31 +1989,19 @@ const Footer = () => {
             </h4>
 
             <div className="mt-4 space-y-3 text-xs text-zinc-600">
-              <a
-                href="#platform"
-                className="block hover:text-zinc-300"
-              >
+              <a href="#platform" className="block hover:text-zinc-300">
                 Platform
               </a>
 
-              <a
-                href="#integrations"
-                className="block hover:text-zinc-300"
-              >
+              <a href="#integrations" className="block hover:text-zinc-300">
                 Integrations
               </a>
 
-              <a
-                href="#intelligence"
-                className="block hover:text-zinc-300"
-              >
+              <a href="#intelligence" className="block hover:text-zinc-300">
                 Intelligence
               </a>
 
-              <a
-                href="#how-it-works"
-                className="block hover:text-zinc-300"
-              >
+              <a href="#how-it-works" className="block hover:text-zinc-300">
                 How it works
               </a>
             </div>
@@ -1557,17 +2013,11 @@ const Footer = () => {
             </h4>
 
             <div className="mt-4 space-y-3 text-xs text-zinc-600">
-              <Link
-                to="/login"
-                className="block hover:text-zinc-300"
-              >
+              <Link to="/login" className="block hover:text-zinc-300">
                 Sign in
               </Link>
 
-              <Link
-                to="/signup"
-                className="block hover:text-zinc-300"
-              >
+              <Link to="/signup" className="block hover:text-zinc-300">
                 Create account
               </Link>
             </div>
@@ -1640,9 +2090,7 @@ export const LandingPage = () => {
       }
 
       if (event.key === 'ArrowLeft') {
-        setDemoStep((current) =>
-          Math.max(0, current - 1)
-        );
+        setDemoStep((current) => Math.max(0, current - 1));
       }
     };
 
