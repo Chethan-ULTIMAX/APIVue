@@ -1,12 +1,12 @@
-import type { Goal } from '@/hooks/use-goals';
+import type { Goal, GoalMetadata } from '@/hooks/use-goals';
 import type { ProfileSnapshot, TrackedProfile } from '@/lib/integrations/registry';
 export type GoalTrackingMode='metric'|'activity'|'streak';
 export type GoalTrackingPeriod='lifetime'|'daily';
-export interface GoalTracking{mode:GoalTrackingMode;period:GoalTrackingPeriod;profileId?:string;metricKey?:string;baseline?:number;}
+export type GoalTracking=GoalMetadata&{mode:GoalTrackingMode;period:GoalTrackingPeriod;profileId?:string;metricKey?:string;baseline?:number;};
 export interface GoalTrackerOption{id:string;mode:GoalTrackingMode;period:GoalTrackingPeriod;profileId?:string;metricKey?:string;label:string;description:string;value:number;unit:string;}
 function metadataObject(goal:Goal):Record<string,unknown>{return goal.metadata&&typeof goal.metadata==='object'&&!Array.isArray(goal.metadata)?goal.metadata as Record<string,unknown>:{};}
 export function getGoalTracking(goal:Goal):GoalTracking|null{const raw=metadataObject(goal).tracking;if(!raw||typeof raw!=='object'||Array.isArray(raw))return null;const t=raw as Record<string,unknown>;if(t.mode!=='metric'&&t.mode!=='activity'&&t.mode!=='streak')return null;return{mode:t.mode,period:t.period==='daily'?'daily':'lifetime',profileId:typeof t.profileId==='string'?t.profileId:undefined,metricKey:typeof t.metricKey==='string'?t.metricKey:undefined,baseline:typeof t.baseline==='number'&&Number.isFinite(t.baseline)?t.baseline:undefined};}
-export function withGoalTracking(metadata:Goal['metadata'],tracking:GoalTracking):Goal['metadata']{const base=metadata&&typeof metadata==='object'&&!Array.isArray(metadata)?metadata as Record<string,unknown>:{};return{...base,tracking} as Goal['metadata'];}
+export function withGoalTracking(metadata:Goal['metadata'],tracking:GoalTracking):Goal['metadata']{const base=metadata&&typeof metadata==='object'&&!Array.isArray(metadata)?metadata as Record<string,unknown>:{};return{...base,tracking};}
 function localDayKey(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function previousDay(key:string){const d=new Date(`${key}T00:00:00`);d.setDate(d.getDate()-1);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 export function mergeGoalActivity(profiles:TrackedProfile[]){const map=new Map<string,number>();for(const p of profiles)for(const item of p.data?.activity??[]){if(!item?.date)continue;const key=item.date.slice(0,10);map.set(key,(map.get(key)??0)+Math.max(0,Number(item.count)||0));}return[...map.entries()].map(([date,count])=>({date,count})).sort((a,b)=>a.date.localeCompare(b.date));}
