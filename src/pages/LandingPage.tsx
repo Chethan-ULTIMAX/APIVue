@@ -600,13 +600,13 @@ const CursorCard = ({
 /* =========================================================
    LOGO
 ========================================================= */
-
+const logoSrc = `${import.meta.env.BASE_URL}favicon.ico`;
 const Logo = () => {
   return (
     <Link to="/" className="group flex items-center gap-2.5">
       <div className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10">
         <img
-          src="/favicon.ico"
+          src={logoSrc}
           alt="APIVue"
           className="h-7 w-7 object-contain transition-transform duration-300 group-hover:scale-110"
         />
@@ -1190,7 +1190,7 @@ const DataPipeline = () => {
         >
           <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-400/40 bg-[#0d1117] shadow-[0_0_40px_rgba(139,92,246,0.35)]">
             <img
-              src="/favicon.ico"
+              src={logoSrc}
               alt="APIVue"
               className="h-9 w-9 object-contain"
             />

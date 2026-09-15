@@ -36,6 +36,7 @@ import { TimeRangeChart } from '@/components/analytics/TimeRangeChart';
 import { CountUp } from '@/components/apivue/CountUp';
 import { APIVueSignature } from '@/components/apivue/APIVueSignature';
 import { ProfileAvatar } from '@/components/apivue/ProfileBits';
+const faviconSrc = `${import.meta.env.BASE_URL}favicon.ico`;
 
 /* ============================================================
  * Category groups — aligned to real integration IDs only.
