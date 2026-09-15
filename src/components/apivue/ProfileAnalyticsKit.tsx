@@ -2,23 +2,141 @@ import { useMemo } from 'react';
 
 export type ActivityPoint = { date: string; count: number; label?: string; type?: string };
 export type HistoryPoint = { date: string; value: number; label?: string; description?: string };
-export const formatProfileDate = (value: string) => new Date(`${value.slice(0, 10)}T00:00:00Z`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-function mapActivity(activity: ActivityPoint[]) { const map = new Map<string, ActivityPoint>(); for (const item of activity) { if (!item?.date) continue; const date = item.date.slice(0, 10); const previous = map.get(date); map.set(date, previous ? { date, count: previous.count + item.count, label: [previous.label, item.label].filter(Boolean).join(' · ').slice(0, 180) || undefined, type: previous.type || item.type } : { ...item, date }); } return map; }
-function streaks(activity: ActivityPoint[]) { const map = mapActivity(activity); const dates = [...map.keys()].sort(); if (!dates.length) return { current: 0, best: 0 }; const latest = new Date(`${dates[dates.length - 1]}T00:00:00Z`); const today = new Date(); today.setUTCHours(0, 0, 0, 0); let current = 0; if (Math.round((today.getTime() - latest.getTime()) / 86400000) <= 1) { for (const cursor = new Date(latest); map.get(cursor.toISOString().slice(0, 10))?.count > 0; cursor.setUTCDate(cursor.getUTCDate() - 1)) current += 1; } let best = 0; let run = 0; const last = new Date(`${dates[dates.length - 1]}T00:00:00Z`); for (const cursor = new Date(`${dates[0]}T00:00:00Z`); cursor <= last; cursor.setUTCDate(cursor.getUTCDate() + 1)) { if (map.get(cursor.toISOString().slice(0, 10))?.count > 0) { run += 1; best = Math.max(best, run); } else run = 0; } return { current, best }; }
 
-export function ActivityHeatmap({ activity, title = 'Activity' }: { activity: ActivityPoint[]; title?: string }) {
- const { weeks, max } = useMemo(() => { const map = mapActivity(activity); const end = new Date(); end.setUTCHours(0,0,0,0); end.setUTCDate(end.getUTCDate() + (6-end.getUTCDay())); const start = new Date(end); start.setUTCDate(end.getUTCDate()-364); const columns: ActivityPoint[][]=[]; for(let week=0;week<53;week++){const column:ActivityPoint[]=[]; for(let day=0;day<7;day++){const date=new Date(start); date.setUTCDate(start.getUTCDate()+week*7+day); const key=date.toISOString().slice(0,10); column.push(map.get(key)??{date:key,count:0});} columns.push(column);} return {weeks:columns,max:Math.max(...columns.flat().map(day=>day.count),1)};},[activity]);
- const streak=useMemo(()=>streaks(activity),[activity]); const total=activity.reduce((sum,item)=>sum+item.count,0);
- return <section className="rounded-2xl border bg-card p-5 shadow-sm">
-  <div className="mb-4 flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-sm font-bold">{title}</h2><p className="mt-1 text-xs text-muted-foreground">{total.toLocaleString()} real activity events · Sunday is the first day of every week</p></div><div className="flex gap-2 text-[11px] font-semibold"><span className="rounded-full border px-2.5 py-1">Current · {streak.current}d</span><span className="rounded-full border px-2.5 py-1">Best · {streak.best}d</span></div></div>
-  <div className="overflow-x-auto"><div className="grid min-w-[760px] grid-cols-[42px_1fr] gap-2"><div className="grid grid-rows-7 gap-1.5 pt-5 text-[10px] text-muted-foreground">{['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(day=><span key={day} className="flex h-3 items-center">{day}</span>)}</div><div><div className="mb-1 grid grid-cols-[repeat(53,minmax(0,1fr))] gap-1.5 text-[9px] text-muted-foreground">{weeks.map((week,index)=><span key={week[0].date}>{index%4===0?new Date(`${week[0].date}T00:00:00Z`).toLocaleString(undefined,{month:'short',timeZone:'UTC'}):''}</span>)}</div><div className="grid grid-flow-col auto-cols-fr grid-rows-7 gap-1.5">{weeks.flat().map(day=>{const ratio=day.count/max;const level=day.count===0?0:ratio<=.25?1:ratio<=.5?2:ratio<=.75?3:4;const tip=[`${day.count} ${day.count===1?'event':'events'} · ${formatProfileDate(day.date)}`,day.label?`Activity: ${day.label}`:'',day.type?`Type: ${day.type}`:''].filter(Boolean).join('\n');return <div key={day.date} title={tip} aria-label={tip} className={`h-3 w-3 rounded-[3px] border border-border/30 bg-muted hover:z-10 hover:scale-150 ${level?`profile-heat-${level}`:''}`} />;})}</div></div></div></div></div>
-  <div className="mt-3 flex justify-end gap-1.5 text-[10px] text-muted-foreground"><span>Less</span>{[0,1,2,3,4].map(level=><span key={level} className={`h-3 w-3 rounded-[3px] border border-border/30 ${level?`profile-heat-${level}`:'bg-muted'}`} />)}<span>More</span></div>
- </section>;
+export const formatProfileDate = (value: string) =>
+  new Date(`${value.slice(0, 10)}T00:00:00Z`).toLocaleDateString(undefined, {
+    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
+  });
+
+function mapActivity(activity: ActivityPoint[]) {
+  const map = new Map<string, ActivityPoint>();
+  for (const item of activity) {
+    if (!item?.date) continue;
+    const date = item.date.slice(0, 10);
+    const previous = map.get(date);
+    map.set(date, previous
+      ? { date, count: previous.count + item.count, label: [previous.label, item.label].filter(Boolean).join(' · ').slice(0, 180) || undefined, type: previous.type || item.type }
+      : { ...item, date });
+  }
+  return map;
 }
 
-export function HistoryChart({ points, valueLabel='Value' }: { points: HistoryPoint[]; valueLabel?: string }) {
- const clean=points.filter(point=>Number.isFinite(Number(point.value))&&point.date).slice().sort((a,b)=>a.date.localeCompare(b.date)); if(clean.length<2)return <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Collecting real history. More provider snapshots will turn this into a progression graph.</div>;
- const values=clean.map(point=>Number(point.value)); const low=Math.min(...values); const high=Math.max(...values); const span=Math.max(high-low,1); const width=900; const height=240; const padX=42; const top=24; const bottom=42;
- const svgPoints=clean.map((point,index)=>({...point,x:padX+index/Math.max(clean.length-1,1)*(width-padX*2),y:top+(1-(Number(point.value)-low)/span)*(height-top-bottom)})); const path=svgPoints.map((point,index)=>`${index?'L':'M'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' '); const last=svgPoints[svgPoints.length-1]; const area=`${path} L ${last.x} ${height-bottom} L ${svgPoints[0].x} ${height-bottom} Z`; const labelIndexes=svgPoints.length<=6?svgPoints.map((_,index)=>index):[0,Math.floor(svgPoints.length/4),Math.floor(svgPoints.length/2),Math.floor(svgPoints.length*.75),svgPoints.length-1];
- return <div className="space-y-2"><div className="flex justify-between text-[10px] text-muted-foreground"><span>Low {Math.round(low).toLocaleString()}</span><span>Latest <b className="text-foreground">{Math.round(values[values.length-1]).toLocaleString()}</b></span><span>Peak {Math.round(high).toLocaleString()}</span></div><div className="overflow-hidden rounded-xl border bg-background/50"><svg viewBox={`0 0 ${width} ${height}`} className="h-[240px] w-full" preserveAspectRatio="none" role="img" aria-label={`${valueLabel} progression`}>{[0,1,2,3,4].map(row=><line key={row} x1={padX} x2={width-padX} y1={top+row*42} y2={top+row*42} className="stroke-border" strokeDasharray="3 5" />)}<path d={area} className="fill-primary/10" /><path d={path} fill="none" className="stroke-primary" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />{svgPoints.map(point=><circle key={`${point.date}-${point.value}-${point.label??''}`} cx={point.x} cy={point.y} r="4" className="fill-primary stroke-background" strokeWidth="2"><title>{[formatProfileDate(point.date),point.label,point.description,`${valueLabel}: ${Number(point.value).toLocaleString()}`].filter(Boolean).join('\n')}</title></circle>)}</svg></div><div className="flex justify-between gap-3 px-1 font-mono text-[10px] text-muted-foreground">{labelIndexes.map(index=><span key={clean[index].date}>{clean[index].date}</span>)}</div></div>;
+function streaks(activity: ActivityPoint[]) {
+  const map = mapActivity(activity);
+  const dates = [...map.keys()].sort();
+  if (!dates.length) return { current: 0, best: 0 };
+  const latest = new Date(`${dates[dates.length - 1]}T00:00:00Z`);
+  const today = new Date(); today.setUTCHours(0, 0, 0, 0);
+  let current = 0;
+  if (Math.round((today.getTime() - latest.getTime()) / 86400000) <= 1) {
+    for (const cursor = new Date(latest); map.get(cursor.toISOString().slice(0, 10))?.count > 0; cursor.setUTCDate(cursor.getUTCDate() - 1)) current += 1;
+  }
+  let best = 0; let run = 0;
+  const last = new Date(`${dates[dates.length - 1]}T00:00:00Z`);
+  for (const cursor = new Date(`${dates[0]}T00:00:00Z`); cursor <= last; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+    if (map.get(cursor.toISOString().slice(0, 10))?.count > 0) { run += 1; best = Math.max(best, run); } else run = 0;
+  }
+  return { current, best };
+}
+
+export function ActivityHeatmap({ activity, title = 'Activity' }: { activity: ActivityPoint[]; title?: string }) {
+  const { weeks, max } = useMemo(() => {
+    const map = mapActivity(activity);
+    const end = new Date(); end.setUTCHours(0, 0, 0, 0); end.setUTCDate(end.getUTCDate() + (6 - end.getUTCDay()));
+    const start = new Date(end); start.setUTCDate(end.getUTCDate() - 364);
+    const columns: ActivityPoint[][] = [];
+    for (let week = 0; week < 53; week += 1) {
+      const column: ActivityPoint[] = [];
+      for (let day = 0; day < 7; day += 1) {
+        const date = new Date(start); date.setUTCDate(start.getUTCDate() + week * 7 + day);
+        const key = date.toISOString().slice(0, 10);
+        column.push(map.get(key) ?? { date: key, count: 0 });
+      }
+      columns.push(column);
+    }
+    return { weeks: columns, max: Math.max(...columns.flat().map(day => day.count), 1) };
+  }, [activity]);
+
+  const streak = useMemo(() => streaks(activity), [activity]);
+  const total = activity.reduce((sum, item) => sum + item.count, 0);
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  return (
+    <section className="rounded-2xl border bg-card p-5 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-bold">{title}</h2>
+          <p className="mt-1 text-xs text-muted-foreground">{total.toLocaleString()} real activity events · Sunday is the first day of every week</p>
+        </div>
+        <div className="flex gap-2 text-[11px] font-semibold">
+          <span className="rounded-full border px-2.5 py-1">Current · {streak.current}d</span>
+          <span className="rounded-full border px-2.5 py-1">Best · {streak.best}d</span>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <div className="min-w-[760px]">
+          <div className="grid grid-cols-[42px_1fr] gap-2">
+            <div className="grid grid-rows-7 gap-1.5 pt-5 text-[10px] text-muted-foreground">
+              {dayNames.map(day => <span key={day} className="flex h-3 items-center">{day}</span>)}
+            </div>
+            <div>
+              <div className="mb-1 grid grid-cols-53 gap-1.5 text-[9px] text-muted-foreground">
+                {weeks.map((week, index) => (
+                  <span key={week[0].date}>{index % 4 === 0 ? new Date(`${week[0].date}T00:00:00Z`).toLocaleString(undefined, { month: 'short', timeZone: 'UTC' }) : ''}</span>
+                ))}
+              </div>
+              <div className="grid grid-flow-col auto-cols-fr grid-rows-7 gap-1.5">
+                {weeks.flat().map(day => {
+                  const ratio = day.count / max;
+                  const level = day.count === 0 ? 0 : ratio <= 0.25 ? 1 : ratio <= 0.5 ? 2 : ratio <= 0.75 ? 3 : 4;
+                  const tip = [
+                    `${day.count} ${day.count === 1 ? 'event' : 'events'} · ${formatProfileDate(day.date)}`,
+                    day.label ? `Activity: ${day.label}` : '',
+                    day.type ? `Type: ${day.type}` : '',
+                  ].filter(Boolean).join('\n');
+                  return <div key={day.date} title={tip} aria-label={tip} className={`h-3 w-3 rounded-[3px] border border-border/30 bg-muted hover:z-10 hover:scale-150 ${level ? `profile-heat-${level}` : ''}`} />;
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex justify-end gap-1.5 text-[10px] text-muted-foreground">
+        <span>Less</span>
+        {[0, 1, 2, 3, 4].map(level => <span key={level} className={`h-3 w-3 rounded-[3px] border border-border/30 ${level ? `profile-heat-${level}` : 'bg-muted'}`} />)}
+        <span>More</span>
+      </div>
+    </section>
+  );
+}
+
+export function HistoryChart({ points, valueLabel = 'Value' }: { points: HistoryPoint[]; valueLabel?: string }) {
+  const clean = points.filter(point => Number.isFinite(Number(point.value)) && point.date).slice().sort((a, b) => a.date.localeCompare(b.date));
+  if (clean.length < 2) return <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Collecting real history. More provider snapshots will turn this into a progression graph.</div>;
+
+  const values = clean.map(point => Number(point.value));
+  const low = Math.min(...values); const high = Math.max(...values); const span = Math.max(high - low, 1);
+  const width = 900; const height = 240; const padX = 42; const top = 24; const bottom = 42;
+  const svgPoints = clean.map((point, index) => ({ ...point, x: padX + index / Math.max(clean.length - 1, 1) * (width - padX * 2), y: top + (1 - (Number(point.value) - low) / span) * (height - top - bottom) }));
+  const path = svgPoints.map((point, index) => `${index ? 'L' : 'M'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' ');
+  const last = svgPoints[svgPoints.length - 1];
+  const area = `${path} L ${last.x} ${height - bottom} L ${svgPoints[0].x} ${height - bottom} Z`;
+  const labelIndexes = svgPoints.length <= 6 ? svgPoints.map((_, index) => index) : [0, Math.floor(svgPoints.length / 4), Math.floor(svgPoints.length / 2), Math.floor(svgPoints.length * 0.75), svgPoints.length - 1];
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between text-[10px] text-muted-foreground"><span>Low {Math.round(low).toLocaleString()}</span><span>Latest <b className="text-foreground">{Math.round(values[values.length - 1]).toLocaleString()}</b></span><span>Peak {Math.round(high).toLocaleString()}</span></div>
+      <div className="overflow-hidden rounded-xl border bg-background/50">
+        <svg viewBox={`0 0 ${width} ${height}`} className="h-[240px] w-full" preserveAspectRatio="none" role="img" aria-label={`${valueLabel} progression`}>
+          {[0, 1, 2, 3, 4].map(row => <line key={row} x1={padX} x2={width - padX} y1={top + row * 42} y2={top + row * 42} className="stroke-border" strokeDasharray="3 5" />)}
+          <path d={area} className="fill-primary/10" />
+          <path d={path} fill="none" className="stroke-primary" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          {svgPoints.map(point => <circle key={`${point.date}-${point.value}-${point.label ?? ''}`} cx={point.x} cy={point.y} r="4" className="fill-primary stroke-background" strokeWidth="2"><title>{[formatProfileDate(point.date), point.label, point.description, `${valueLabel}: ${Number(point.value).toLocaleString()}`].filter(Boolean).join('\n')}</title></circle>)}
+        </svg>
+      </div>
+      <div className="flex justify-between gap-3 px-1 font-mono text-[10px] text-muted-foreground">{labelIndexes.map(index => <span key={clean[index].date}>{clean[index].date}</span>)}</div>
+    </div>
+  );
 }
