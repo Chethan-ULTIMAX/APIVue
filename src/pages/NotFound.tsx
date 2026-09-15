@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 
 export function NotFound() {
   const navigate = useNavigate();
+  const logoSrc = `${import.meta.env.BASE_URL}favicon.ico`;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
         <img
-          src="/favicon.ico"
+          src={logoSrc}
           alt=""
           className="h-12 w-12 object-contain"
         />
