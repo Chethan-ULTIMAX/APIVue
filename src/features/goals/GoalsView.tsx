@@ -1,737 +1,158 @@
-import { useMemo, useState } from 'react';
-import {
-  Check,
-  Lightbulb,
-  Plus,
-  Target,
-  Trash2,
-  TrendingUp,
-} from 'lucide-react';
-
+import { useEffect, useMemo, useState } from 'react';
+import { Activity, CalendarClock, Check, ChevronDown, CirclePause, Flame, Lightbulb, Plus, RefreshCw, Sparkles, Target, Trash2, Trophy, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import {
-  useCreateGoal,
-  useDeleteGoal,
-  useGoals,
-  useUpdateGoal,
-} from '@/hooks/use-goals';
-import {
-  useProfileSnapshots,
-  useTrackedProfiles,
-} from '@/hooks/use-profiles';
-import {
-  calculateAllGoalsProgress,
-  generateGoalActions,
-  getGoalsSummary,
-  suggestNewGoals,
-  type GoalAction,
-  type GoalProgress,
-} from '@/lib/analytics/goals';
 import { toast } from '@/hooks/use-toast';
+import { useCreateGoal, useDeleteGoal, useGoals, useUpdateGoal } from '@/hooks/use-goals';
+import { useProfileSnapshots, useTrackedProfiles } from '@/hooks/use-profiles';
+import { calculateAllGoalsProgress, generateGoalActions, getGoalsSummary, suggestNewGoals, type GoalProgress } from '@/lib/analytics/goals';
+import { getGoalTrackerOptions, getGoalTracking, inferLegacyTracking, resolveGoalValue, trackingId, type GoalTracking } from '@/lib/analytics/goal-tracking';
+import type { Goal } from '@/hooks/use-goals';
 
-/* ============================================================
- * Status grouping
- *
- * GoalProgress.status values are:
- *   'on-track' | 'behind' | 'completed' | 'paused' | 'cancelled'
- *
- * Group them into display buckets for the UI.
- * ============================================================ */
+const STATUS_STYLES = {
+  completed: 'border-emerald-500/30 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-300',
+  'on-track': 'border-primary/20 bg-primary/[0.04] text-primary',
+  behind: 'border-orange-500/30 bg-orange-500/[0.06] text-orange-700 dark:text-orange-300',
+  paused: 'border-muted-foreground/20 bg-muted/50 text-muted-foreground',
+  cancelled: 'border-destructive/20 bg-destructive/[0.04] text-destructive',
+} as const;
 
-type StatusBucket =
-  | 'completed'
-  | 'on-track'
-  | 'behind'
-  | 'paused'
-  | 'cancelled';
-
-const BUCKETS: StatusBucket[] = [
-  'completed',
-  'on-track',
-  'behind',
-  'paused',
-  'cancelled',
-];
-
-function groupByStatus(progress: GoalProgress[]): Record<StatusBucket, GoalProgress[]> {
-  const grouped: Record<StatusBucket, GoalProgress[]> = {
-    completed: [],
-    'on-track': [],
-    behind: [],
-    paused: [],
-    cancelled: [],
-  };
-  for (const g of progress) {
-    grouped[g.status].push(g);
-  }
-  return grouped;
-}
-
-/* ============================================================
- * Action styling
- * ============================================================ */
-
-const ACTION_STYLES: Record<
-  GoalAction['type'],
-  { container: string; icon: string; badge: string; emoji: string }
-> = {
-  celebrate: {
-    container: 'border-emerald-500/30 bg-emerald-500/[0.05]',
-    icon: 'text-emerald-600 dark:text-emerald-400',
-    badge: 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400',
-    emoji: '🎉',
-  },
-  warn: {
-    container: 'border-destructive/30 bg-destructive/[0.05]',
-    icon: 'text-destructive',
-    badge: 'border-destructive/30 text-destructive',
-    emoji: '⚠️',
-  },
-  encourage: {
-    container: 'border-cyan-500/30 bg-cyan-500/[0.05]',
-    icon: 'text-cyan-600 dark:text-cyan-400',
-    badge: 'border-cyan-500/30 text-cyan-600 dark:text-cyan-400',
-    emoji: '💪',
-  },
-  suggest: {
-    container: 'border-blue-500/30 bg-blue-500/[0.05]',
-    icon: 'text-blue-600 dark:text-blue-400',
-    badge: 'border-blue-500/30 text-blue-600 dark:text-blue-400',
-    emoji: '💡',
-  },
-};
-
-/* ============================================================
- * Main view
- * ============================================================ */
+function formatNumber(value: number) { return new Intl.NumberFormat().format(Math.round(value)); }
+function trackingLabel(goal: Goal): string { const t = getGoalTracking(goal) ?? null; if (!t) return 'Manual'; if (t.mode === 'streak') return 'Current streak'; if (t.mode === 'activity') return t.period === 'daily' ? 'Daily activity' : 'Recorded activity'; return `${t.metricKey ?? 'Profile metric'}`; }
+function percent(value: number) { return Math.max(0, Math.min(100, value)); }
 
 export function GoalsView() {
   const goalsQuery = useGoals();
   const profilesQuery = useTrackedProfiles();
   const snapshotsQuery = useProfileSnapshots();
-
   const createGoal = useCreateGoal();
+  const updateGoal = useUpdateGoal();
   const deleteGoal = useDeleteGoal();
-
-  const [title, setTitle] = useState('');
-  const [target, setTarget] = useState('');
-  const [unit, setUnit] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const goals = goalsQuery.data ?? [];
   const profiles = profilesQuery.data ?? [];
   const snapshots = snapshotsQuery.data ?? [];
+  const trackerOptions = useMemo(() => getGoalTrackerOptions(profiles), [profiles]);
+  const [title, setTitle] = useState('');
+  const [target, setTarget] = useState('');
+  const [unit, setUnit] = useState('');
+  const [targetDate, setTargetDate] = useState('');
+  const [tracker, setTracker] = useState('activity:daily');
+  const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'paused'>('all');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const isLoading =
-    goalsQuery.isLoading ||
-    profilesQuery.isLoading ||
-    snapshotsQuery.isLoading;
-  const error = goalsQuery.error as Error | null;
-  const hasData = profiles.length > 0 || snapshots.length > 0;
+  const goalsProgress = useMemo(() => calculateAllGoalsProgress(goals, profiles, snapshots), [goals, profiles, snapshots]);
+  const summary = useMemo(() => getGoalsSummary(goalsProgress), [goalsProgress]);
+  const actions = useMemo(() => generateGoalActions(goalsProgress), [goalsProgress]);
+  const suggestions = useMemo(() => suggestNewGoals(profiles, snapshots, goals), [profiles, snapshots, goals]);
+  const filtered = useMemo(() => goalsProgress.filter((g) => filter === 'all' || (filter === 'active' && (g.status === 'on-track' || g.status === 'behind')) || g.status === filter), [filter, goalsProgress]);
+  const isLoading = goalsQuery.isLoading || profilesQuery.isLoading || snapshotsQuery.isLoading;
 
-  /* ---------- Derived data ---------- */
+  // Persist only values that are actually derived from collected data. Daily goals keep their DB status active so they can complete again tomorrow.
+  useEffect(() => {
+    if (!goals.length || !profiles.length) return;
+    for (const progress of goalsProgress) {
+      const goal = progress.goal;
+      if (goal.status === 'paused' || goal.status === 'cancelled') continue;
+      const explicit = getGoalTracking(goal);
+      const inferred = explicit ?? inferLegacyTracking(goal, profiles);
+      if (!inferred) continue;
+      const daily = inferred.period === 'daily';
+      const nextStatus = daily ? (goal.status === 'completed' ? 'active' : goal.status) : progress.status === 'completed' ? 'completed' : goal.status;
+      const trackingChanged = trackingId(explicit) !== trackingId(inferred);
+      const valueChanged = Math.abs((goal.current_value ?? 0) - progress.currentValue) > 0.000001;
+      const statusChanged = nextStatus !== goal.status && !(daily && progress.status === 'completed');
+      if (trackingChanged || valueChanged || statusChanged) {
+        void updateGoal.mutateAsync({ id: goal.id, current_value: progress.currentValue, metadata: { ...(goal.metadata ?? {}), tracking: inferred }, status: nextStatus as Goal['status'] }).catch(() => undefined);
+      }
+    }
+  }, [goalsProgress, profiles, goals.length]);
 
-  const goalsProgress = useMemo(
-    () => calculateAllGoalsProgress(goals, profiles, snapshots),
-    [goals, profiles, snapshots],
-  );
+  const resetCreate = () => { setTitle(''); setTarget(''); setUnit(''); setTargetDate(''); setTracker(trackerOptions[0]?.id ?? 'activity:daily'); };
+  const buildTracking = (id: string, forGoal?: Goal): GoalTracking => {
+    const option = trackerOptions.find((x) => x.id === id);
+    if (!option) return { mode: 'activity', period: 'daily' };
+    const baseline = option.mode === 'metric' ? option.value : undefined;
+    return { mode: option.mode, period: option.period, profileId: option.profileId, metricKey: option.metricKey, baseline: forGoal ? getGoalTracking(forGoal)?.baseline ?? baseline : baseline };
+  };
 
-  const summary = useMemo(
-    () => getGoalsSummary(goalsProgress),
-    [goalsProgress],
-  );
-
-  const goalActions = useMemo(
-    () => generateGoalActions(goalsProgress),
-    [goalsProgress],
-  );
-
-  const suggestions = useMemo(
-    () => suggestNewGoals(profiles, snapshots, goals),
-    [profiles, snapshots, goals],
-  );
-
-  const grouped = useMemo(
-    () => groupByStatus(goalsProgress),
-    [goalsProgress],
-  );
-
-  /* ---------- Create ---------- */
-
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleCreate = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!title.trim()) return;
-
+    const selected = trackerOptions.find((x) => x.id === tracker);
     try {
-      await createGoal.mutateAsync({
-        title: title.trim(),
-        target_value: target ? Number(target) : null,
-        unit: unit.trim() || undefined,
-      });
-      setTitle('');
-      setTarget('');
-      setUnit('');
-      toast({ title: 'Goal created' });
-    } catch (err) {
-      toast({
-        title: 'Could not create goal',
-        description: (err as Error).message,
-        variant: 'destructive',
-      });
-    }
+      await createGoal.mutateAsync({ title: title.trim(), target_value: target ? Math.max(0, Number(target)) : null, unit: unit.trim() || selected?.unit || undefined, target_date: targetDate || undefined, metadata: { tracking: buildTracking(tracker) } });
+      resetCreate(); setShowCreate(false); toast({ title: 'Goal created', description: 'Progress will update from your real data.' });
+    } catch (error) { toast({ title: 'Could not create goal', description: (error as Error).message, variant: 'destructive' }); }
   };
 
-  /* ---------- Delete ---------- */
-
-  const handleDelete = (id: string, goalTitle: string) => {
-    if (!window.confirm(`Delete "${goalTitle}"? This cannot be undone.`)) {
-      return;
-    }
-    deleteGoal.mutate(id, {
-      onSuccess: () => toast({ title: 'Goal deleted' }),
-      onError: (err) =>
-        toast({
-          title: 'Could not delete goal',
-          description: (err as Error).message,
-          variant: 'destructive',
-        }),
-    });
-  };
-
-  /* ---------- Prefill from suggestion ---------- */
-
-  const applySuggestion = (s: {
-    title: string;
-    target_value: number;
-    unit: string;
-  }) => {
-    setTitle(s.title);
-    setTarget(String(s.target_value));
-    setUnit(s.unit);
-    setShowSuggestions(false);
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-  };
-
-  /* ---------- Render ---------- */
-
-  return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Goals</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Track objectives using your real progress data.
-        </p>
-      </div>
-
-      {/* Summary */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <SummaryTile label="Total goals" value={summary.total} />
-        <SummaryTile
-          label="Completed"
-          value={summary.completed}
-          tone="emerald"
-        />
-        <SummaryTile
-          label="On track"
-          value={summary.onTrack}
-          tone="cyan"
-        />
-        <SummaryTile
-          label="Behind schedule"
-          value={summary.behind}
-          tone="orange"
-        />
-        <SummaryTile
-          label="Avg progress"
-          value={`${summary.averageProgress}%`}
-        />
-      </div>
-
-      {/* States */}
-      {error ? (
-        <Card className="border-destructive/30 bg-destructive/5">
-          <CardContent className="p-6 text-center">
-            <p className="text-sm font-medium text-destructive">
-              Could not load goals
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {error.message}
-            </p>
-            <Button
-              size="sm"
-              variant="outline"
-              className="mt-4"
-              onClick={() => goalsQuery.refetch()}
-            >
-              Try again
-            </Button>
-          </CardContent>
-        </Card>
-      ) : isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {[0, 1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 w-32 rounded bg-muted" />
-              </CardHeader>
-              <CardContent>
-                <div className="h-2 w-48 rounded bg-muted" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : goals.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card/40 p-10 text-center">
-          <Target className="mx-auto h-10 w-10 text-muted-foreground/40" />
-          <p className="mt-3 text-sm font-medium">No goals yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Create a goal to start measuring progress against your real
-            activity.
-          </p>
-          {hasData && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="mt-4"
-              onClick={() => setShowSuggestions(true)}
-            >
-              <Lightbulb className="mr-2 h-3.5 w-3.5" />
-              Get suggestions
-            </Button>
-          )}
-        </div>
-      ) : (
-        <>
-          {/* Goal groups */}
-          {BUCKETS.map((bucket) => {
-            const items = grouped[bucket];
-            if (items.length === 0) return null;
-
-            const heading =
-              bucket === 'completed'
-                ? 'Completed'
-                : bucket === 'on-track'
-                  ? 'On track'
-                  : bucket === 'behind'
-                    ? 'Needs attention'
-                    : bucket === 'paused'
-                      ? 'Paused'
-                      : 'Cancelled';
-
-            const headingColor =
-              bucket === 'completed'
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : bucket === 'behind'
-                  ? 'text-orange-600 dark:text-orange-400'
-                  : bucket === 'on-track'
-                    ? 'text-cyan-600 dark:text-cyan-400'
-                    : 'text-muted-foreground';
-
-            return (
-              <section key={bucket} className="space-y-3">
-                <h2
-                  className={`flex items-center gap-2 text-lg font-semibold ${headingColor}`}
-                >
-                  {bucket === 'completed' ? (
-                    <Check className="h-5 w-5" />
-                  ) : (
-                    <TrendingUp className="h-5 w-5" />
-                  )}
-                  {heading}
-                </h2>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  {items.map((g) => (
-                    <GoalCard
-                      key={g.goal.id}
-                      goalProgress={g}
-                      onDelete={() => handleDelete(g.goal.id, g.goal.title)}
-                    />
-                  ))}
-                </div>
-              </section>
-            );
-          })}
-        </>
-      )}
-
-      {/* Goal actions */}
-      {goalActions.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Signals</h2>
-          {goalActions.map((action) => {
-            const style = ACTION_STYLES[action.type];
-            return (
-              <Card key={action.id} className={`border ${style.container}`}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background/60 text-lg">
-                      <span aria-hidden="true">{style.emoji}</span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-medium">{action.title}</h3>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {action.description}
-                      </p>
-                      <Badge
-                        variant="outline"
-                        className={`mt-2 px-1.5 py-0.5 text-[10px] ${style.badge}`}
-                      >
-                        Priority {action.priority}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </section>
-      )}
-
-      {/* Suggestions */}
-      {showSuggestions && suggestions.length > 0 && (
-        <Card className="border-border bg-card/60">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Lightbulb className="h-4 w-4 text-amber-500" />
-              Suggested goals based on your activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3">
-              {suggestions.map((suggestion, index) => (
-                <button
-                  key={`${suggestion.title}-${index}`}
-                  type="button"
-                  onClick={() => applySuggestion(suggestion)}
-                  className="rounded-lg border border-border bg-muted/30 p-4 text-left transition-colors hover:bg-muted/60"
-                >
-                  <p className="text-sm font-medium">{suggestion.title}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {suggestion.description}
-                  </p>
-                  <p className="mt-1 text-[11px] text-muted-foreground/80">
-                    {suggestion.reasoning}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {showSuggestions && suggestions.length === 0 && hasData && (
-        <Card className="border-dashed border-border bg-card/40">
-          <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            No new goal suggestions based on your current data.
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Create goal form */}
-      <Card className="border-border bg-card/60">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Plus className="h-4 w-4" />
-            Create a goal
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form
-            onSubmit={handleSubmit}
-            className="grid gap-3 sm:grid-cols-[1fr_120px_120px_auto] sm:items-end"
-          >
-            <div className="space-y-1">
-              <Label htmlFor="goal-title">Goal</Label>
-              <Input
-                id="goal-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Solve 50 problems"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="goal-target">Target</Label>
-              <Input
-                id="goal-target"
-                type="number"
-                min="0"
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-                placeholder="50"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="goal-unit">Unit</Label>
-              <Input
-                id="goal-unit"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                placeholder="problems"
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={createGoal.isPending || !title.trim()}
-            >
-              {createGoal.isPending ? 'Creating…' : 'Create'}
-            </Button>
-          </form>
-
-          {hasData && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSuggestions((v) => !v)}
-                className="text-xs"
-              >
-                <Lightbulb className="mr-1 h-3.5 w-3.5" />
-                {showSuggestions ? 'Hide suggestions' : 'Show suggestions'}
-              </Button>
-            </div>
-          )}
-
-          {createGoal.error && (
-            <p className="mt-3 text-sm text-destructive">
-              {(createGoal.error as Error).message}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-/* ============================================================
- * Summary tile
- * ============================================================ */
-
-function SummaryTile({
-  label,
-  value,
-  tone = 'default',
-}: {
-  label: string;
-  value: number | string;
-  tone?: 'default' | 'emerald' | 'cyan' | 'orange';
-}) {
-  const toneClass =
-    tone === 'emerald'
-      ? 'text-emerald-600 dark:text-emerald-400'
-      : tone === 'cyan'
-        ? 'text-cyan-600 dark:text-cyan-400'
-        : tone === 'orange'
-          ? 'text-orange-600 dark:text-orange-400'
-          : 'text-foreground';
-
-  return (
-    <div className="rounded-lg border border-border bg-card p-4 text-center">
-      <p className={`text-3xl font-bold tabular-nums ${toneClass}`}>
-        {value}
-      </p>
-      <p className="mt-1 text-xs text-muted-foreground">{label}</p>
-    </div>
-  );
-}
-
-/* ============================================================
- * Goal card
- * ============================================================ */
-
-function GoalCard({
-  goalProgress,
-  onDelete,
-}: {
-  goalProgress: GoalProgress;
-  onDelete: () => void;
-}) {
-  const updateGoal = useUpdateGoal();
-
-  const progress = Math.max(
-    0,
-    Math.min(100, Math.round(goalProgress.progressPercentage)),
-  );
-  const isCompleted = goalProgress.status === 'completed';
-  const isBehind = goalProgress.status === 'behind';
-
-  const containerClass = isCompleted
-    ? 'border-emerald-500/30 bg-emerald-500/[0.04]'
-    : isBehind
-      ? 'border-orange-500/30 bg-orange-500/[0.04]'
-      : 'border-border bg-card';
-
-  const barClass = isCompleted
-    ? 'bg-emerald-500'
-    : isBehind
-      ? 'bg-orange-500'
-      : 'bg-primary';
-
-  const progressTextClass = isCompleted
-    ? 'text-emerald-600 dark:text-emerald-400'
-    : isBehind
-      ? 'text-orange-600 dark:text-orange-400'
-      : 'text-primary';
-
-  const handleComplete = () => {
-    updateGoal.mutate(
-      { id: goalProgress.goal.id, status: 'completed' },
-      {
-        onSuccess: () => toast({ title: 'Goal marked complete' }),
-        onError: (err) =>
-          toast({
-            title: 'Could not update goal',
-            description: (err as Error).message,
-            variant: 'destructive',
-          }),
-      },
-    );
+  const refresh = async () => { await Promise.all([goalsQuery.refetch(), profilesQuery.refetch(), snapshotsQuery.refetch()]); toast({ title: 'Goals refreshed', description: 'Progress was recalculated from the latest stored data.' }); };
+  const setStatus = async (goal: Goal, status: Goal['status']) => { try { await updateGoal.mutateAsync({ id: goal.id, status }); toast({ title: status === 'completed' ? 'Goal marked complete' : status === 'active' ? 'Goal resumed' : `Goal ${status}` }); } catch (error) { toast({ title: 'Update failed', description: (error as Error).message, variant: 'destructive' }); } };
+  const remove = async (goal: Goal) => { if (!window.confirm(`Delete “${goal.title}”? This cannot be undone.`)) return; try { await deleteGoal.mutateAsync(goal.id); toast({ title: 'Goal deleted' }); } catch (error) { toast({ title: 'Delete failed', description: (error as Error).message, variant: 'destructive' }); } };
+  const saveEdit = async (goal: Goal, form: HTMLFormElement) => {
+    const data = new FormData(form); const nextTarget = String(data.get('target') ?? '').trim(); const nextDate = String(data.get('targetDate') ?? '').trim(); const nextTracker = String(data.get('tracker') ?? tracker);
+    try { await updateGoal.mutateAsync({ id: goal.id, target_value: nextTarget ? Math.max(0, Number(nextTarget)) : null, target_date: nextDate || null, metadata: { ...(goal.metadata ?? {}), tracking: buildTracking(nextTracker, goal) } }); setEditingId(null); toast({ title: 'Goal updated' }); } catch (error) { toast({ title: 'Update failed', description: (error as Error).message, variant: 'destructive' }); }
   };
 
   return (
-    <Card className={`border ${containerClass} transition-colors`}>
-      <CardHeader className="flex flex-row items-start justify-between space-y-0">
-        <div className="min-w-0">
-          <CardTitle className="text-base">
-            {goalProgress.goal.title}
-          </CardTitle>
-
-          <p className="mt-1 text-xs text-muted-foreground">
-            {goalProgress.currentValue.toLocaleString()}
-            {goalProgress.targetValue !== null
-              ? ` / ${goalProgress.targetValue.toLocaleString()}`
-              : ''}
-            {goalProgress.unit ? ` ${goalProgress.unit}` : ''}
-          </p>
-
-          {goalProgress.daysRemaining !== undefined && (
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {goalProgress.daysRemaining > 0
-                ? `${goalProgress.daysRemaining} day${
-                    goalProgress.daysRemaining === 1 ? '' : 's'
-                  } remaining`
-                : goalProgress.daysRemaining === 0
-                  ? 'Due today'
-                  : `${Math.abs(goalProgress.daysRemaining)} day${
-                      Math.abs(goalProgress.daysRemaining) === 1 ? '' : 's'
-                    } overdue`}
-            </p>
-          )}
-        </div>
-
-        <button
-          type="button"
-          title="Delete goal"
-          onClick={onDelete}
-          className="text-muted-foreground transition-colors hover:text-destructive"
-          aria-label={`Delete ${goalProgress.goal.title}`}
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </CardHeader>
-
-      <CardContent className="space-y-3">
-        {/* Progress bar */}
-        {goalProgress.targetValue !== null ? (
+    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-8">
+      <section className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="mb-1 flex justify-between text-[10px]">
-              <span className="text-muted-foreground">Progress</span>
-              <span className={`font-medium ${progressTextClass}`}>
-                {progress}%
-              </span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div
-                className={`h-full rounded-full transition-all ${barClass}`}
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-
-            {goalProgress.trend !== 'insufficient-data' && (
-              <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-                <span>Trend: {goalProgress.trend}</span>
-                <span>Status: {goalProgress.status}</span>
-              </div>
-            )}
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/[0.06] px-2.5 py-1 text-[11px] font-medium text-primary"><Target className="h-3.5 w-3.5" /> Real progress tracking</div>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Goals</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Turn your connected developer activity into measurable targets. Progress is recalculated from the latest profile data and snapshots.</p>
           </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Set a target to measure progress.
-          </p>
-        )}
-
-        {/* Recommendation */}
-        {goalProgress.recommendations.length > 0 && (
-          <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            {goalProgress.recommendations[0]}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={refresh} disabled={isLoading || goalsQuery.isFetching}><RefreshCw className={`mr-2 h-4 w-4 ${goalsQuery.isFetching ? 'animate-spin' : ''}`} />Refresh</Button>
+            <Button onClick={() => { resetCreate(); setShowCreate(true); }}><Plus className="mr-2 h-4 w-4" />New goal</Button>
           </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex flex-wrap gap-2">
-          {isCompleted ? (
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              <Check className="h-3.5 w-3.5" />
-              Completed
-            </span>
-          ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleComplete}
-              disabled={updateGoal.isPending}
-            >
-              {updateGoal.isPending ? 'Saving…' : 'Mark complete'}
-            </Button>
-          )}
         </div>
+      </section>
 
-        {/* Related metrics */}
-        {goalProgress.relatedMetrics.length > 0 && (
-          <div className="border-t border-border pt-3">
-            <p className="mb-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-              Related metrics
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {goalProgress.relatedMetrics.map((m, i) => {
-                const displayValue =
-                  typeof m.value === 'number'
-                    ? m.value.toLocaleString()
-                    : m.value;
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        <Stat label="Goals" value={summary.total} icon={<Target className="h-4 w-4" />} />
+        <Stat label="Completed" value={summary.completed} icon={<Trophy className="h-4 w-4" />} />
+        <Stat label="On track" value={summary.onTrack} icon={<Check className="h-4 w-4" />} />
+        <Stat label="Needs attention" value={summary.behind} icon={<Activity className="h-4 w-4" />} />
+        <Stat label="Average" value={`${summary.averageProgress}%`} icon={<Flame className="h-4 w-4" />} />
+      </section>
 
-                return (
-                  <span
-                    key={`${m.label}-${i}`}
-                    className="rounded bg-muted/50 px-1.5 py-0.5 text-[10px] text-muted-foreground"
-                  >
-                    {m.label}: {displayValue}
-                    {m.change !== undefined && (
-                      <span
-                        className={
-                          m.change > 0
-                            ? 'ml-1 text-emerald-600 dark:text-emerald-400'
-                            : m.change < 0
-                              ? 'ml-1 text-destructive'
-                              : 'ml-1'
-                        }
-                      >
-                        ({m.change > 0 ? '+' : ''}
-                        {m.change})
-                      </span>
-                    )}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {showCreate && <Card className="border-primary/20 shadow-sm"><CardHeader><CardTitle className="flex items-center justify-between text-base"><span className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" />Create a tracked goal</span><Button size="icon" variant="ghost" onClick={() => setShowCreate(false)}><X className="h-4 w-4" /></Button></CardTitle></CardHeader><CardContent><form onSubmit={handleCreate} className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <Field label="Goal"><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Solve 50 problems" required /></Field>
+        <Field label="Target"><Input type="number" min="0" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="50" /></Field>
+        <Field label="Unit"><Input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="problems" /></Field>
+        <Field label="Target date"><Input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} /></Field>
+        <Field label="Track this from"><select value={tracker} onChange={(e) => setTracker(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"><option value="">Select tracker</option>{trackerOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}</select></Field>
+        <div className="flex items-end gap-2 md:col-span-2 lg:col-span-5"><Button type="submit" disabled={createGoal.isPending || !title.trim()}>{createGoal.isPending ? 'Creating…' : 'Create goal'}</Button><Button type="button" variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button></div>
+      </form></CardContent></Card>}
+
+      <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex rounded-lg border border-border bg-muted/30 p-1">{(['all','active','completed','paused'] as const).map((item) => <button key={item} type="button" onClick={() => setFilter(item)} className={`rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors ${filter===item?'bg-background text-foreground shadow-sm':'text-muted-foreground hover:text-foreground'}`}>{item}</button>)}</div>{suggestions.length > 0 && <Button variant="outline" size="sm" onClick={() => setShowSuggestions((v)=>!v)}><Lightbulb className="mr-2 h-3.5 w-3.5" />Suggestions <ChevronDown className={`ml-1 h-3.5 w-3.5 transition-transform ${showSuggestions?'rotate-180':''}`} /></Button>}</div>
+
+      {showSuggestions && suggestions.length > 0 && <Card><CardHeader><CardTitle className="text-base">Suggestions from your real activity</CardTitle></CardHeader><CardContent className="grid gap-2 md:grid-cols-2">{suggestions.map((s,i)=><button key={`${s.title}-${i}`} type="button" onClick={()=>{setTitle(s.title);setTarget(String(s.target_value));setUnit(s.unit);setShowCreate(true);setShowSuggestions(false);}} className="rounded-xl border border-border bg-muted/20 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-muted/40"><p className="text-sm font-medium">{s.title}</p><p className="mt-1 text-xs text-muted-foreground">{s.description}</p></button>)}</CardContent></Card>}
+
+      {actions.length > 0 && <section className="grid gap-3 md:grid-cols-2">{actions.slice(0,4).map((action)=><div key={action.id} className="rounded-xl border border-border bg-card p-4"><div className="flex items-start gap-3"><div className="rounded-lg bg-muted p-2"><Sparkles className="h-4 w-4" /></div><div><p className="text-sm font-medium">{action.title}</p><p className="mt-1 text-xs text-muted-foreground">{action.description}</p></div></div></div>)}</section>}
+
+      {isLoading ? <div className="grid gap-4 md:grid-cols-2">{[1,2,3,4].map((n)=><Card key={n} className="animate-pulse"><CardContent className="space-y-4 p-6"><div className="h-5 w-1/2 rounded bg-muted"/><div className="h-2 rounded bg-muted"/><div className="h-4 w-1/3 rounded bg-muted"/></CardContent></Card>)}</div> : filtered.length === 0 ? <Card className="border-dashed"><CardContent className="flex flex-col items-center justify-center p-12 text-center"><Target className="h-10 w-10 text-muted-foreground/30"/><p className="mt-4 font-medium">{goals.length ? 'No goals in this filter' : 'No goals yet'}</p><p className="mt-1 max-w-md text-sm text-muted-foreground">{goals.length ? 'Try another status filter.' : 'Create your first tracked goal and APIVue will keep its progress tied to real developer data.'}</p></CardContent></Card> : <div className="grid gap-4 lg:grid-cols-2">{filtered.map((progress)=><GoalCard key={progress.goal.id} progress={progress} trackerOptions={trackerOptions} editing={editingId===progress.goal.id} onEdit={()=>setEditingId(progress.goal.id)} onCancelEdit={()=>setEditingId(null)} onSaveEdit={(form)=>saveEdit(progress.goal,form)} onStatus={(status)=>setStatus(progress.goal,status)} onDelete={()=>remove(progress.goal)} />)}</div>}
+
+      <p className="text-center text-[11px] text-muted-foreground">Progress is calculated locally from stored APIVue profile data. No synthetic activity or invented metrics are used.</p>
+    </div>
   );
+}
+
+function Stat({label,value,icon}:{label:string;value:string|number;icon:React.ReactNode}){return <Card className="overflow-hidden"><CardContent className="flex items-center gap-3 p-4"><div className="rounded-lg bg-muted p-2 text-muted-foreground">{icon}</div><div><p className="text-[11px] text-muted-foreground">{label}</p><p className="mt-0.5 text-xl font-semibold tracking-tight">{value}</p></div></CardContent></Card>}
+function Field({label,children}:{label:string;children:React.ReactNode}){return <div className="space-y-1.5"><Label className="text-xs">{label}</Label>{children}</div>}
+
+function GoalCard({progress,trackerOptions,editing,onEdit,onCancelEdit,onSaveEdit,onStatus,onDelete}:{progress:GoalProgress;trackerOptions:ReturnType<typeof getGoalTrackerOptions>;editing:boolean;onEdit:()=>void;onCancelEdit:()=>void;onSaveEdit:(form:HTMLFormElement)=>void;onStatus:(status:Goal['status'])=>void;onDelete:()=>void}){
+  const {goal}=progress; const auto=!!getGoalTracking(goal); const width=percent(progress.progressPercentage); const statusClass=STATUS_STYLES[progress.status];
+  return <Card className="group overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"><div className="h-1 bg-muted"><div className="h-full bg-primary transition-all duration-500" style={{width:`${width}%`}}/></div><CardHeader className="pb-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><CardTitle className="text-base">{goal.title}</CardTitle><Badge variant="outline" className={statusClass}>{progress.status.replace('-', ' ')}</Badge></div><div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"><span className="inline-flex items-center gap-1"><Activity className="h-3 w-3" />{trackingLabel(goal)}</span>{auto&&<span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-primary">AUTO</span>}{progress.daysRemaining!==undefined&&<span className="inline-flex items-center gap-1"><CalendarClock className="h-3 w-3" />{progress.daysRemaining>0?`${progress.daysRemaining}d left`:progress.daysRemaining===0?'Due today':'Past due'}</span>}</div></div><Button size="icon" variant="ghost" onClick={onEdit} className="shrink-0 opacity-70 hover:opacity-100"><ChevronDown className={`h-4 w-4 transition-transform ${editing?'rotate-180':''}`}/></Button></div></CardHeader><CardContent className="space-y-4 pt-0"><div><div className="mb-2 flex items-end justify-between"><div><span className="text-2xl font-semibold tabular-nums">{formatNumber(progress.currentValue)}</span><span className="ml-1 text-xs text-muted-foreground">{progress.unit??'value'}</span></div><span className="text-sm font-medium tabular-nums">{width}%</span></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all duration-700" style={{width:`${width}%`}}/></div>{progress.targetValue!==null&&<p className="mt-1.5 text-[11px] text-muted-foreground">Target {formatNumber(progress.targetValue)} {progress.unit??''}</p>}</div>{progress.recommendations[0]&&<div className="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">{progress.recommendations[0]}</div>}
+      <div className="flex flex-wrap gap-2"><Button size="sm" variant={goal.status==='completed'?'outline':'default'} onClick={()=>onStatus(goal.status==='completed'?'active':'completed')}>{goal.status==='completed'?<><RefreshCw className="mr-1.5 h-3.5 w-3.5"/>Reopen</>:<><Check className="mr-1.5 h-3.5 w-3.5"/>Mark complete</>}</Button>{goal.status==='paused'?<Button size="sm" variant="outline" onClick={()=>onStatus('active')}><RefreshCw className="mr-1.5 h-3.5 w-3.5"/>Resume</Button>:goal.status==='active'&&<Button size="sm" variant="outline" onClick={()=>onStatus('paused')}><CirclePause className="mr-1.5 h-3.5 w-3.5"/>Pause</Button>}<Button size="sm" variant="ghost" onClick={onDelete} className="ml-auto text-muted-foreground hover:text-destructive"><Trash2 className="mr-1.5 h-3.5 w-3.5"/>Delete</Button></div>
+      {editing&&<form onSubmit={(e)=>{e.preventDefault();onSaveEdit(e.currentTarget)}} className="grid gap-3 rounded-xl border border-border bg-muted/20 p-3 sm:grid-cols-3"><Field label="Target"><Input name="target" type="number" min="0" defaultValue={goal.target_value??''}/></Field><Field label="Target date"><Input name="targetDate" type="date" defaultValue={goal.target_date?.slice(0,10)??''}/></Field><Field label="Tracker"><select name="tracker" defaultValue={trackingId(getGoalTracking(goal))} className="h-10 w-full rounded-md border border-input bg-background px-2 text-xs">{trackerOptions.map(o=><option key={o.id} value={o.id}>{o.label}</option>)}</select></Field><div className="flex gap-2 sm:col-span-3"><Button size="sm" type="submit">Save changes</Button><Button size="sm" type="button" variant="ghost" onClick={onCancelEdit}>Cancel</Button></div></form>}
+    </CardContent></Card>
 }
