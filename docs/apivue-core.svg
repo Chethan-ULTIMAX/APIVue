@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+  <radialGradient id="bg" cx="50%" cy="48%" r="70%"><stop offset="0" stop-color="#17142d"/><stop offset="1" stop-color="#070911"/></radialGradient>
+  <radialGradient id="core" cx="50%" cy="45%" r="65%"><stop offset="0" stop-color="#18204c"/><stop offset=".7" stop-color="#090d20"/><stop offset="1" stop-color="#050711"/></radialGradient>
+  <filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="soft" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="28"/></filter>
+  <linearGradient id="brand" x1="0" x2="1"><stop stop-color="#5ee7ff"/><stop offset=".5" stop-color="#7c5cff"/><stop offset="1" stop-color="#b44cff"/></linearGradient>
+  <style>text{font-family:Inter,Segoe UI,Arial,sans-serif}.label{font-size:25px;font-weight:650;fill:#f7f7ff}.sub{font-size:14px;fill:#8d91a8}</style>
+</defs>
+<rect width="1600" height="900" fill="url(#bg)"/>
+<circle cx="800" cy="445" r="250" fill="#6b4cff" opacity=".08" filter="url(#soft)"/>
+<!-- connections -->
+<g fill="none" stroke-linecap="round" stroke-dasharray="7 12" stroke-width="3" opacity=".9">
+ <path d="M610 360 L390 190 L225 125" stroke="#a66cff"/>
+ <path d="M990 360 L1210 190 L1375 125" stroke="#ffad2f"/>
+ <path d="M565 445 L360 445 L200 445" stroke="#ff3fb4"/>
+ <path d="M1035 445 L1240 445 L1400 445" stroke="#ff405e"/>
+ <path d="M640 545 L405 700 L230 735" stroke="#22bfff"/>
+ <path d="M960 545 L1195 700 L1370 735" stroke="#ff3f93"/>
+ <path d="M800 625 L800 780" stroke="#26e879"/>
+</g>
+<g filter="url(#glow)">
+ <circle cx="390" cy="190" r="6" fill="#b77aff"/><circle cx="1210" cy="190" r="6" fill="#ffb22e"/>
+ <circle cx="360" cy="445" r="6" fill="#ff4bbb"/><circle cx="1240" cy="445" r="6" fill="#ff405e"/>
+ <circle cx="405" cy="700" r="6" fill="#28c8ff"/><circle cx="1195" cy="700" r="6" fill="#ff3f93"/><circle cx="800" cy="780" r="6" fill="#27ee7c"/>
+</g>
+<!-- core -->
+<circle cx="800" cy="445" r="188" fill="none" stroke="#704dff" stroke-opacity=".22" stroke-width="2"/>
+<circle cx="800" cy="445" r="154" fill="url(#core)" stroke="#704dff" stroke-width="3" opacity=".98"/>
+<circle cx="800" cy="445" r="132" fill="none" stroke="url(#brand)" stroke-width="7" filter="url(#glow)"/>
+<circle cx="800" cy="445" r="116" fill="none" stroke="#6d67ff" stroke-opacity=".35" stroke-width="2"/>
+<rect x="735" y="372" width="130" height="130" rx="20" fill="#080b16" stroke="#4e59b8" stroke-width="2"/>
+<!-- logo mark -->
+<path d="M764 417 l20 12 20-20 20 12 20-20 16 10-36 36-20-12-20 20-20-12z" fill="url(#brand)"/>
+<text x="800" y="540" text-anchor="middle" font-size="32" font-weight="750" fill="#fff">APIVue Core</text>
+<text x="800" y="568" text-anchor="middle" class="sub">DATA • HISTORY • ANALYTICS • INSIGHTS</text>
+<!-- cards -->
+<g>
+ <g transform="translate(95 70)"><rect width="285" height="92" rx="18" fill="#0d1020" stroke="#8756ff" stroke-width="2"/><circle cx="35" cy="46" r="18" fill="#8756ff" opacity=".18"/><text x="70" y="52" class="label">GitHub</text><text x="70" y="72" class="sub">code &amp; activity</text></g>
+ <g transform="translate(1220 70)"><rect width="285" height="92" rx="18" fill="#0d1020" stroke="#ffad2f" stroke-width="2"/><circle cx="35" cy="46" r="18" fill="#ffad2f" opacity=".18"/><text x="70" y="52" class="label">LeetCode</text><text x="70" y="72" class="sub">problems &amp; progress</text></g>
+ <g transform="translate(70 399)"><rect width="285" height="92" rx="18" fill="#0d1020" stroke="#ff3fb4" stroke-width="2"/><circle cx="35" cy="46" r="18" fill="#ff3fb4" opacity=".18"/><text x="70" y="52" class="label">Codeforces</text><text x="70" y="72" class="sub">competitive activity</text></g>
+ <g transform="translate(1245 399)"><rect width="285" height="92" rx="18" fill="#0d1020" stroke="#ff405e" stroke-width="2"/><circle cx="35" cy="46" r="18" fill="#ff405e" opacity=".18"/><text x="70" y="52" class="label">Codewars</text><text x="70" y="72" class="sub">kata &amp; practice</text></g>
+ <g transform="translate(100 690)"><rect width="320" height="92" rx="18" fill="#0d1020" stroke="#22bfff" stroke-width="2"/><circle cx="35" cy="46" r="18" fill="#22bfff" opacity=".18"/><text x="70" y="52" class="label">Stack Overflow</text><text x="70" y="72" class="sub">community activity</text></g>
+ <g transform="translate(1180 690)"><rect width="320" height="92" rx="18" fill="#0d1020" stroke="#ff3f93" stroke-width="2"/><circle cx="35" cy="46" r="18" fill="#ff3f93" opacity=".18"/><text x="70" y="52" class="label">TryHackMe</text><text x="70" y="72" class="sub">security learning</text></g>
+ <g transform="translate(660 790)"><rect width="280" height="82" rx="18" fill="#0d1020" stroke="#26e879" stroke-width="2"/><circle cx="35" cy="41" r="18" fill="#26e879" opacity=".18"/><text x="70" y="47" class="label">Hack The Box</text></g>
+</g>
+</svg>
