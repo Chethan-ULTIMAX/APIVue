@@ -1,0 +1,249 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Check,
+  ChevronRight,
+  ImagePlus,
+  Lock,
+  LogOut,
+  Monitor,
+  Moon,
+  Palette,
+  RefreshCw,
+  Shield,
+  Sun,
+  Trash2,
+  UserRound,
+  X,
+} from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { useAuth } from '@/lib/auth-context';
+import { useTheme } from '@/lib/theme-context';
+import { supabase } from '@/integrations/supabase/client';
+
+const AVATAR_BUCKET = 'avatars';
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+const ACCEPTED_AVATAR_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+
+interface ProfileSettings {
+  display_name: string;
+  avatar_url: string | null;
+  bio: string;
+  timezone: string;
+  is_private: boolean;
+}
+
+function initials(name: string, email: string) {
+  const source = name.trim() || email.split('@')[0] || 'A';
+  return source.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
+}
+
+export function SettingsView() {
+  const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [profile, setProfile] = useState<ProfileSettings>({ display_name: user?.name ?? '', avatar_url: null, bio: '', timezone: 'Asia/Kolkata', is_private: true });
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const avatarPath = useMemo(() => profile.avatar_url?.startsWith('storage://') ? profile.avatar_url.slice('storage://'.length) : null, [profile.avatar_url]);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      if (!user) return;
+      setLoading(true);
+      setError(null);
+      const { data, error: loadError } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      if (!mounted) return;
+      if (loadError) {
+        setError(loadError.message);
+      } else if (data) {
+        setProfile({
+          display_name: data.display_name ?? user.name ?? '',
+          avatar_url: data.avatar_url,
+          bio: data.bio ?? '',
+          timezone: data.timezone || 'Asia/Kolkata',
+          is_private: data.is_private ?? true,
+        });
+      } else {
+        setProfile((current) => ({ ...current, display_name: user.name ?? current.display_name }));
+      }
+      setLoading(false);
+    };
+    void load();
+    return () => { mounted = false; };
+  }, [user]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const createPreview = async () => {
+      if (!avatarPath) {
+        setAvatarPreview(null);
+        return;
+      }
+      const { data } = await supabase.storage.from(AVATAR_BUCKET).createSignedUrl(avatarPath, 3600);
+      if (!cancelled) setAvatarPreview(data?.signedUrl ?? null);
+    };
+    void createPreview();
+    return () => { cancelled = true; };
+  }, [avatarPath]);
+
+  const saveProfile = async () => {
+    if (!user) return;
+    setSaving(true);
+    setMessage(null);
+    setError(null);
+    const { error: saveError } = await supabase.from('profiles').upsert({
+      id: user.id,
+      display_name: profile.display_name.trim() || null,
+      avatar_url: profile.avatar_url,
+      bio: profile.bio.trim() || null,
+      timezone: profile.timezone,
+      is_private: true,
+      updated_at: new Date().toISOString(),
+    });
+    if (saveError) setError(saveError.message);
+    else setMessage('Profile settings saved. Your APIVue account remains private.');
+    setSaving(false);
+  };
+
+  const uploadAvatar = async (file: File) => {
+    if (!user) return;
+    setError(null);
+    setMessage(null);
+    if (!ACCEPTED_AVATAR_TYPES.has(file.type)) {
+      setError('Use a PNG, JPEG, or WebP image.');
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      setError('Profile pictures must be 2 MB or smaller.');
+      return;
+    }
+    setAvatarBusy(true);
+    const extension = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+    const path = `${user.id}/avatar.${extension}`;
+    const { error: uploadError } = await supabase.storage.from(AVATAR_BUCKET).upload(path, file, { upsert: true, contentType: file.type, cacheControl: '3600' });
+    if (uploadError) {
+      setError(uploadError.message);
+      setAvatarBusy(false);
+      return;
+    }
+    setProfile((current) => ({ ...current, avatar_url: `storage://${path}` }));
+    setAvatarBusy(false);
+    setMessage('Profile picture uploaded. Save the profile to keep the change.');
+  };
+
+  const removeAvatar = async () => {
+    if (!user || !avatarPath) return;
+    setAvatarBusy(true);
+    setError(null);
+    const { error: removeError } = await supabase.storage.from(AVATAR_BUCKET).remove([avatarPath]);
+    if (removeError) setError(removeError.message);
+    else {
+      setProfile((current) => ({ ...current, avatar_url: null }));
+      setAvatarPreview(null);
+      setMessage('Profile picture removed. Save the profile to keep the change.');
+    }
+    setAvatarBusy(false);
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <button type="button" onClick={() => navigate('/dashboard')} className="hover:text-foreground">Dashboard</button>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="text-foreground">Settings</span>
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Manage your APIVue profile, privacy, appearance, and account.</p>
+        </div>
+        <Button onClick={() => void saveProfile()} disabled={saving || loading} className="rounded-lg">
+          {saving ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+          Save changes
+        </Button>
+      </div>
+
+      {message && <div className="mb-5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">{message}</div>}
+      {error && <div className="mb-5 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</div>}
+
+      <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <aside className="rounded-2xl border border-border/70 bg-card/70 p-2 shadow-sm">
+          {[
+            ['profile', UserRound, 'Profile'],
+            ['privacy', Lock, 'Privacy'],
+            ['appearance', Palette, 'Appearance'],
+            ['account', Shield, 'Account'],
+          ].map(([id, Icon, label]) => (
+            <a key={String(id)} href={`#${id}`} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+              <Icon className="h-4 w-4" />{label as string}
+            </a>
+          ))}
+        </aside>
+
+        <div className="space-y-5">
+          <section id="profile" className="scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-5 shadow-sm sm:p-6">
+            <div className="mb-5 flex items-start gap-3">
+              <div className="rounded-xl bg-primary/10 p-2.5 text-primary"><UserRound className="h-5 w-5" /></div>
+              <div><h2 className="font-semibold">Profile</h2><p className="text-sm text-muted-foreground">Your APIVue identity is separate from connected platform identities.</p></div>
+            </div>
+            <div className="flex flex-col gap-6 sm:flex-row">
+              <div className="flex flex-col items-center gap-2">
+                <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted text-2xl font-semibold">
+                  {avatarPreview ? <img src={avatarPreview} alt="Your APIVue profile" className="h-full w-full object-cover" /> : initials(profile.display_name, user.email)}
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAvatar(file); event.currentTarget.value = ''; }} />
+                <Button variant="outline" size="sm" className="rounded-lg" disabled={avatarBusy} onClick={() => fileInputRef.current?.click()}>
+                  <ImagePlus className="mr-2 h-4 w-4" /> Upload
+                </Button>
+                {avatarPath && <Button variant="ghost" size="sm" className="rounded-lg text-muted-foreground" disabled={avatarBusy} onClick={() => void removeAvatar()}><X className="mr-2 h-4 w-4" /> Remove</Button>}
+                <p className="text-center text-[11px] text-muted-foreground">PNG, JPEG, or WebP · 2 MB max</p>
+              </div>
+              <div className="grid flex-1 gap-4 sm:grid-cols-2">
+                <label className="space-y-1.5 text-sm"><span className="font-medium">Display name</span><Input value={profile.display_name} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })} placeholder="Your name" className="rounded-lg" /></label>
+                <label className="space-y-1.5 text-sm"><span className="font-medium">Email</span><Input value={user.email} disabled className="rounded-lg opacity-70" /></label>
+                <label className="space-y-1.5 text-sm sm:col-span-2"><span className="font-medium">Bio</span><textarea value={profile.bio} onChange={(e) => setProfile({ ...profile, bio: e.target.value })} maxLength={280} rows={4} placeholder="A short developer bio" className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" /><span className="block text-right text-[11px] text-muted-foreground">{profile.bio.length}/280</span></label>
+                <label className="space-y-1.5 text-sm"><span className="font-medium">Timezone</span><select value={profile.timezone} onChange={(e) => setProfile({ ...profile, timezone: e.target.value })} className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="Asia/Kolkata">Asia/Kolkata (IST)</option><option value="UTC">UTC</option><option value="America/New_York">America/New_York</option><option value="Europe/London">Europe/London</option><option value="Asia/Singapore">Asia/Singapore</option></select></label>
+              </div>
+            </div>
+          </section>
+
+          <section id="privacy" className="scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-5 shadow-sm sm:p-6">
+            <div className="mb-5 flex items-start gap-3"><div className="rounded-xl bg-emerald-500/10 p-2.5 text-emerald-600"><Lock className="h-5 w-5" /></div><div><h2 className="font-semibold">Privacy</h2><p className="text-sm text-muted-foreground">Your APIVue account is private by default.</p></div></div>
+            <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-background/50 p-4">
+              <div><p className="font-medium">Private account</p><p className="mt-1 text-sm text-muted-foreground">Only you can read your APIVue profile, connected accounts, snapshots, activity, and goals. Public profile sharing is disabled.</p></div>
+              <Switch checked={true} disabled aria-label="Private account" />
+            </div>
+            <div className="mt-3 flex items-start gap-2 rounded-lg bg-muted/50 px-3 py-2.5 text-xs text-muted-foreground"><Shield className="mt-0.5 h-4 w-4 shrink-0" />Database row-level security is enabled on the account data tables, scoped to the signed-in user.</div>
+          </section>
+
+          <section id="appearance" className="scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-5 shadow-sm sm:p-6">
+            <div className="mb-5 flex items-start gap-3"><div className="rounded-xl bg-violet-500/10 p-2.5 text-violet-600"><Palette className="h-5 w-5" /></div><div><h2 className="font-semibold">Appearance</h2><p className="text-sm text-muted-foreground">Choose how APIVue looks on this device.</p></div></div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {([['light', Sun, 'Light', 'Bright surfaces and crisp contrast'], ['dark', Moon, 'Dark', 'Low-light developer workspace']] as const).map(([value, Icon, title, description]) => <button key={value} type="button" onClick={() => setTheme(value)} className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-colors ${theme === value ? 'border-primary bg-primary/5' : 'border-border/60 hover:bg-accent/60'}`}><Icon className="h-5 w-5" /><span className="flex-1"><span className="block text-sm font-medium">{title}</span><span className="text-xs text-muted-foreground">{description}</span></span>{theme === value && <Check className="h-4 w-4 text-primary" />}</button>)}
+            </div>
+            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><Monitor className="h-3.5 w-3.5" />Theme preference is stored locally on your device.</div>
+          </section>
+
+          <section id="account" className="scroll-mt-20 rounded-2xl border border-border/70 bg-card/70 p-5 shadow-sm sm:p-6">
+            <div className="mb-5 flex items-start gap-3"><div className="rounded-xl bg-amber-500/10 p-2.5 text-amber-600"><Shield className="h-5 w-5" /></div><div><h2 className="font-semibold">Account</h2><p className="text-sm text-muted-foreground">Session and account actions.</p></div></div>
+            <div className="flex flex-col gap-3 sm:flex-row"><Button variant="outline" className="rounded-lg" onClick={() => void signOut()}><LogOut className="mr-2 h-4 w-4" />Sign out</Button><Button variant="outline" disabled className="rounded-lg text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete account</Button></div>
+            <p className="mt-3 text-xs text-muted-foreground">Account deletion is intentionally disabled here until a dedicated, confirmed deletion flow is implemented.</p>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
