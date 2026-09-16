@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PublicOnlyRoute } from '@/components/PublicOnlyRoute';
 import { LandingExperienceEnhancer } from '@/components/LandingExperienceEnhancer';
 import { LandingExploreBridge } from '@/components/LandingExploreBridge';
+import { InteractiveProductDemo } from '@/components/InteractiveProductDemo';
 import { AuthProvider } from '@/lib/auth-context';
 import { ThemeProvider } from '@/lib/theme-context';
 import { OverviewView } from '@/features/overview/OverviewView';
@@ -32,7 +33,7 @@ const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 30_000, retry: 2, refetchOnWindowFocus: false } } });
 
 function App() {
-  return <QueryClientProvider client={queryClient}><AuthProvider><ThemeProvider><BrowserRouter basename={basename}><LandingExperienceEnhancer /><LandingExploreBridge /><Routes>
+  return <QueryClientProvider client={queryClient}><AuthProvider><ThemeProvider><BrowserRouter basename={basename}><LandingExperienceEnhancer /><LandingExploreBridge /><InteractiveProductDemo /><Routes>
     <Route path="/" element={<LandingPage />} />
     <Route path="/explore" element={<ExploreView />} />
     <Route element={<PublicOnlyRoute />}>
