@@ -18,6 +18,7 @@ const pageNames: Record<string, string> = {
   '/dashboard/integrations': 'Integrations',
   '/dashboard/ai-insights': 'AI Insights',
   '/dashboard/goals': 'Goals',
+  '/dashboard/settings': 'Settings',
 };
 
 export function DashboardLayout() {

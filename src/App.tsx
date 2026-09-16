@@ -18,6 +18,7 @@ import { GitHubDataView } from '@/features/integrations/GitHubDataView';
 import { OwnershipVerificationView } from '@/features/integrations/OwnershipVerificationView';
 import { AIInsightsView } from '@/features/ai-insights/AIInsightsView';
 import { GoalsView } from '@/features/goals/GoalsView';
+import { SettingsView } from '@/features/settings/SettingsView';
 
 import { LoginPage } from '@/pages/LoginPage';
 import { SignupPage } from '@/pages/SignupPage';
@@ -51,6 +52,7 @@ function App() {
       <Route path="integrations/verify/:platform" element={<OwnershipVerificationView />} />
       <Route path="ai-insights" element={<AIInsightsView />} />
       <Route path="goals" element={<GoalsView />} />
+      <Route path="settings" element={<SettingsView />} />
     </Route></Route>
     <Route path="*" element={<NotFound />} />
   </Routes></BrowserRouter></ThemeProvider></AuthProvider></QueryClientProvider>;
