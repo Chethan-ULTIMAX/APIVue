@@ -32,8 +32,12 @@ export function SignupPage() {
     e.preventDefault();
     setError(null); setLoading(true);
     try {
-      await signUp(email, password, name);
-      navigate(`/login?next=${encodeURIComponent(redirectTo)}&signup=confirm`, { replace: true });
+      const hasSession = await signUp(email, password, name);
+      if (hasSession) {
+        navigate(redirectTo, { replace: true });
+      } else {
+        navigate(`/login?next=${encodeURIComponent(redirectTo)}&signup=confirm`, { replace: true });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
     } finally { setLoading(false); }
