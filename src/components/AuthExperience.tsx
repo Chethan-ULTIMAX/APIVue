@@ -73,7 +73,7 @@ function AuthVisual({ mode }: { mode: AuthMode }) {
 
             <div className="auth-core-card" aria-hidden="true">
               <div className="auth-core-glow" />
-              <div className="relative rounded-2xl border border-white/10 bg-[#0c0e15]/90 p-4 shadow-2xl shadow-black/30 backdrop-blur-xl">
+              <div className="auth-core-surface relative rounded-2xl border border-white/10 bg-[#0c0e15]/90 p-4 shadow-2xl shadow-black/30 backdrop-blur-xl">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
                     <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/40">Developer graph</div>
@@ -83,13 +83,10 @@ function AuthVisual({ mode }: { mode: AuthMode }) {
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {['GitHub', 'Code', 'Security'].map((label) => (
-                    <div key={label} className="rounded-xl border border-white/8 bg-white/[0.035] px-2 py-3">
+                    <div key={label} className="rounded-xl border border-white/10 bg-white/[0.035] px-2 py-3">
                       <div className="mb-2 h-1.5 w-1/2 rounded-full bg-primary/60" />
                       <div className="text-[9px] font-medium text-white/55">{label}</div>
-                      <div className="mt-2 flex gap-1">
-                        <span className="h-1.5 flex-1 rounded-full bg-primary/35" />
-                        <span className="h-1.5 w-1/4 rounded-full bg-cyan-400/35" />
-                      </div>
+                      <div className="mt-2 flex gap-1"><span className="h-1.5 flex-1 rounded-full bg-primary/35" /><span className="h-1.5 w-1/4 rounded-full bg-cyan-400/35" /></div>
                     </div>
                   ))}
                 </div>
