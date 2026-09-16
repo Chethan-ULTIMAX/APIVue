@@ -45,4 +45,10 @@ export default tseslint.config(
       'no-empty': 'off',
     },
   },
+  {
+    files: ['src/components/InteractiveProductDemo.tsx'],
+    rules: {
+      'no-useless-escape': 'off',
+    },
+  },
 );
