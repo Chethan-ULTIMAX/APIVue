@@ -27,7 +27,8 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name?: string) => Promise<void>;
+  /** Returns true when Supabase created an active session immediately. */
+  signUp: (email: string, password: string, name?: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   signInWithGoogle: (redirectPath?: string) => Promise<boolean>;
@@ -139,7 +140,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
-    const { error: signUpError } = await supabase.auth.signUp({
+    const {
+      data: { session },
+      error: signUpError,
+    } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -148,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     if (signUpError) throw signUpError;
+    return Boolean(session);
   };
 
   const signOut = async () => {
