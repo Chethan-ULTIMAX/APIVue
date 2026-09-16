@@ -2,20 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
 
-import { useAuth } from '@/lib/auth-context';
+import { AuthExperience } from '@/components/AuthExperience';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/lib/auth-context';
 
 function GoogleIcon({ className = 'h-4 w-4' }: { className?: string }) {
   return (
@@ -35,12 +28,9 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-
   const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const logoSrc = `${import.meta.env.BASE_URL}favicon.ico`;
-
   const nextParam = searchParams.get('next');
   const redirectTo = nextParam && /^\/(?!\/)/.test(nextParam) ? nextParam : '/dashboard';
 
@@ -72,33 +62,46 @@ export function LoginPage() {
   const busy = loading || googleLoading;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="mb-2 flex justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <img src={logoSrc} alt="" className="h-9 w-9 object-contain" />
+    <AuthExperience
+      mode="signin"
+      title="Welcome back"
+      description="Sign in to pick up your developer progress, connected profiles, goals, and insights right where you left them."
+      footer={<>Don&apos;t have an account? <Link to={nextParam ? `/signup?next=${encodeURIComponent(nextParam)}` : '/signup'} className="font-semibold text-primary transition hover:text-primary/80">Create one</Link></>}
+    >
+      <div className="space-y-5">
+        {error && <Alert variant="destructive" className="animate-card-reveal"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
+
+        <Button type="button" variant="outline" className="auth-google-button group h-12 w-full gap-3 rounded-xl bg-background/70" onClick={handleGoogleSignIn} disabled={busy}>
+          {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
+          <span>Continue with Google</span>
+          {!googleLoading && <span className="ml-auto text-muted-foreground transition-transform group-hover:translate-x-0.5">→</span>}
+        </Button>
+
+        <div className="relative py-1"><div className="absolute inset-0 flex items-center"><Separator /></div><div className="relative flex justify-center text-[10px] font-semibold uppercase tracking-[0.18em]"><span className="bg-card px-3 text-muted-foreground">Or continue with email</span></div></div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <div className="auth-input-wrap">
+              <Mail className="auth-input-icon" />
+              <Input id="email" type="email" placeholder="name@example.com" className="auth-input pl-10" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={busy} />
             </div>
           </div>
-          <CardTitle className="text-2xl">Welcome back to APIVue</CardTitle>
-          <CardDescription>Sign in to view your progress intelligence.</CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
-          <Button type="button" variant="outline" className="w-full gap-2" onClick={handleGoogleSignIn} disabled={busy}>
-            {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
-            Continue with Google
+          <div className="space-y-2">
+            <div className="flex items-center justify-between"><Label htmlFor="password">Password</Label><Link to="/forgot-password" className="text-xs font-medium text-muted-foreground transition hover:text-primary">Forgot password?</Link></div>
+            <div className="auth-input-wrap">
+              <Lock className="auth-input-icon" />
+              <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="auth-input pl-10 pr-11" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={busy} />
+              <button type="button" onClick={() => setShowPassword((v) => !v)} className="auth-password-toggle focus-ring" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+            </div>
+          </div>
+          <Button type="submit" className="auth-submit-button h-12 w-full rounded-xl text-sm font-semibold shadow-lg shadow-primary/20" disabled={busy}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading ? 'Signing in…' : 'Sign in'}
+            {!loading && <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-xs">↵</span>}
           </Button>
-          <div className="relative"><div className="absolute inset-0 flex items-center"><Separator /></div><div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or</span></div></div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2"><Label htmlFor="email">Email</Label><div className="relative"><Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input id="email" type="email" placeholder="name@example.com" className="pl-9" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={busy} /></div></div>
-            <div className="space-y-2"><div className="flex items-center justify-between"><Label htmlFor="password">Password</Label><Link to="/forgot-password" className="text-xs text-primary hover:underline">Forgot password?</Link></div><div className="relative"><Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-9 pr-9" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={busy} /><button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-2 top-2.5 rounded p-1 text-muted-foreground hover:text-foreground" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
-            <Button type="submit" className="w-full" disabled={busy}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{loading ? 'Signing in…' : 'Sign in'}</Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4"><p className="text-center text-sm text-muted-foreground">Don&apos;t have an account? <Link to={nextParam ? `/signup?next=${encodeURIComponent(nextParam)}` : '/signup'} className="text-primary hover:underline">Sign up</Link></p></CardFooter>
-      </Card>
-    </div>
+        </form>
+      </div>
+    </AuthExperience>
   );
 }
