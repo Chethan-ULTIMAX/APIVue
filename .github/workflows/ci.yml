@@ -58,4 +58,6 @@ jobs:
       # Exercises the real request executor against a local mock API.
       # No third-party endpoints and no credentials are involved.
       - name: Request execution tests (local mock API)
-        run: npm run test:live
+        # test:all starts scripts/mock-api.mjs on :8788 and runs the suite
+        # against it, so no network or credentials are required.
+        run: npm run test:all
