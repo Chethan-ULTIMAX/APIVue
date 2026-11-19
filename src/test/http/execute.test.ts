@@ -1,3 +1,18 @@
+// @vitest-environment node
+/*
+ * Runs in Node's native environment, not jsdom.
+ *
+ * These tests exercise the real HTTP layer against the local mock API, so they
+ * need Node's own `fetch`/`AbortController`. Under jsdom those globals come from
+ * a different realm than the ones the test file constructs, and Node 24's
+ * undici rejects a foreign `AbortSignal` with
+ * "RequestInit: Expected signal to be an instance of AbortSignal" — which broke
+ * every live request while leaving the pure-function assertions green.
+ *
+ * Nothing in this file touches the DOM, so no jsdom features are lost. All
+ * React/component tests keep the project default (jsdom); this directive
+ * applies to this file only.
+ */
 import { describe, expect, it } from 'vitest';
 
 import {
