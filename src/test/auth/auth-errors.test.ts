@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { friendlyAuthError, isEmailNotConfirmed } from '@/lib/auth-errors';
-import { appUrl, safeRedirectPath } from '@/lib/auth-context';
+import { appUrl, safeRedirectPath } from '@/lib/auth-url';
 
 describe('friendlyAuthError', () => {
   it('explains bad credentials without exposing the raw API string', () => {

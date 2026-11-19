@@ -12,6 +12,51 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
  * sidebar marks the current route; nothing renders a dead control.
  */
 
+/**
+ * The sidebar reads the user's avatar through `supabase.from('profiles')…` and
+ * signs it through `supabase.storage…`. Mocking the client module means the
+ * component under test runs its real code path while the query and the signed
+ * URL are answered locally — no network, and no dependency on the
+ * VITE_SUPABASE_* environment being present (the real module throws at import
+ * time when it is not, which is exactly how CI failed).
+ */
+// `vi.mock` factories are hoisted above imports, so the spies they close over
+// must be hoisted too — otherwise they are read before initialisation.
+const { profileQuery, storageUrl } = vi.hoisted(() => ({
+  profileQuery: vi.fn(),
+  storageUrl: vi.fn(),
+}));
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: (table: string) => {
+      // Mirrors the builder used in AppSidebar:
+      //   from('profiles').select('avatar_url').eq('id', id).maybeSingle()
+      const builder = {
+        select: () => builder,
+        eq: () => builder,
+        maybeSingle: () => {
+          profileQuery(table);
+          return Promise.resolve({ data: { avatar_url: null }, error: null });
+        },
+      };
+      return builder;
+    },
+    storage: {
+      from: (bucket: string) => ({
+        createSignedUrl: (path: string, expiresIn: number) => {
+          storageUrl(bucket, path, expiresIn);
+          return Promise.resolve({ data: { signedUrl: null }, error: null });
+        },
+      }),
+    },
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      signOut: () => Promise.resolve({ error: null }),
+    },
+  },
+}));
+
 vi.mock('@/lib/theme-context', () => ({
   useTheme: () => ({ theme: 'dark', toggleTheme: vi.fn(), setTheme: vi.fn() }),
   ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -50,7 +95,26 @@ function renderLayout(initial = '/dashboard') {
 describe('dashboard shell interactions', () => {
   beforeEach(() => {
     signOut.mockClear();
+    profileQuery.mockClear();
+    storageUrl.mockClear();
     window.localStorage.clear();
+  });
+
+  it('answers the sidebar avatar lookup locally, with no network request', async () => {
+    // A real fetch would mean the Supabase module was not actually replaced.
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    renderLayout('/dashboard/requests');
+    await screen.findByText('requests-route');
+
+    // The sidebar queried the mocked client ...
+    await waitFor(() => expect(profileQuery).toHaveBeenCalledWith('profiles'));
+    // ... it never needed a signed URL, because the user has no avatar ...
+    expect(storageUrl).not.toHaveBeenCalled();
+    // ... and nothing went out over the wire.
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
   });
 
   it('opens the command palette with the keyboard shortcut', async () => {

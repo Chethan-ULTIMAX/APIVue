@@ -8,7 +8,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import { appUrl, safeRedirectPath } from '@/lib/auth-context';
+import { appUrl, safeRedirectPath } from '@/lib/auth-url';
 
 export async function signInWithGoogleRedirect(redirectPath?: string): Promise<void> {
   const target = safeRedirectPath(redirectPath);

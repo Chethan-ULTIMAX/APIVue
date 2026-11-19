@@ -61,20 +61,12 @@ function mapUser(u: SupabaseUser): AuthUser {
   };
 }
 
-export function safeRedirectPath(
-  path: string | undefined,
-  fallback = '/dashboard',
-): string {
-  return path && /^\/(?!\/)/.test(path) ? path : fallback;
-}
-
-/** Build an absolute URL that includes Vite's deployment base path. */
-export function appUrl(path: string): string {
-  const base = import.meta.env.BASE_URL || '/';
-  const normalizedBase = base.endsWith('/') ? base : `${base}/`;
-  const normalizedPath = path.replace(/^\/+/, '');
-  return new URL(`${normalizedBase}${normalizedPath}`, window.location.origin).toString();
-}
+/* Redirect helpers are pure and live in their own module so importing them
+ * does not drag in the Supabase client. They are imported here because the
+ * provider calls `appUrl` itself, and re-exported so every existing
+ * `@/lib/auth-context` import keeps working. */
+import { appUrl, safeRedirectPath } from '@/lib/auth-url';
+export { appUrl, safeRedirectPath };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
