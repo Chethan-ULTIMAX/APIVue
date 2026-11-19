@@ -1,5 +1,13 @@
 # APIVue — Ultimate Visual Transformation
 
+> **Update (QA pass, commit `39ee47f`):** a follow-up verification pass found and fixed eight
+> defects — light-mode contrast failures (measured), touch-unreachable controls, a CSS layer
+> ordering bug, an invisible in-flight indicator, a dangling `aria-describedby` and two animation
+> artefacts. It also added 19 tests. **Browser/screenshot verification was still not possible** in
+> this environment; see [`docs/visual-qa.md`](./visual-qa.md) for the attempt log, the fixes, and the
+> local inspection checklist. The sections below describe the transformation as built; where they
+> say something is unverified, `visual-qa.md` is the current source of truth.
+
 **Branch:** `arena/34f1571e-apivue` (based on `1f31ff6`) · **PR #6 stays open and un-merged.** No deploy, no push.
 **Date:** 2026-11-19
 
