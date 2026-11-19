@@ -13,6 +13,7 @@ import {
   Save,
   Search,
   Send,
+  Sparkles,
   Star,
   Trash2,
   Variable,
@@ -84,6 +85,9 @@ import {
 } from '@/hooks/use-api-workspace';
 
 const EMPTY_VARIABLES: EnvironmentVariable[] = [];
+
+/** A public, CORS-enabled endpoint so a new user can send a real request. */
+const EXAMPLE_URL = 'https://api.github.com/users/octocat';
 
 const METHOD_TONE: Record<HttpMethod, string> = {
   GET: 'text-emerald-600 dark:text-emerald-400',
@@ -862,6 +866,25 @@ export function RequestsView() {
                   <AlertCircle className="h-3 w-3" />
                   Undefined: {missing.map((name) => `{{${name}}}`).join(', ')}
                 </span>
+              ) : null}
+              {!draft.url.trim() ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      url: EXAMPLE_URL,
+                      headers: [
+                        ...current.headers,
+                        { id: rowId('header'), key: 'Accept', value: 'application/vnd.github+json', enabled: true },
+                      ],
+                    }))
+                  }
+                  className="inline-flex items-center gap-1 rounded-md border border-border/70 px-1.5 py-0.5 text-muted-foreground hover:text-foreground"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  Try an example
+                </button>
               ) : null}
               <button
                 type="button"
