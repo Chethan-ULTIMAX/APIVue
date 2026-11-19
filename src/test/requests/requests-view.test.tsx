@@ -31,7 +31,7 @@ vi.mock('@/lib/auth-context', () => ({
     signUp: async () => true,
     signOut: async () => undefined,
     resetPassword: async () => undefined,
-    signInWithGoogle: async () => false,
+    providers: { google: false },
     refreshSession: async () => undefined,
   }),
 }));
