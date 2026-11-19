@@ -760,7 +760,7 @@ export function RequestsView() {
           </div>
 
           {/* URL bar */}
-          <div className="border-b border-border/70 p-2.5 sm:p-3">
+          <div className="border-b border-border/70 bg-surface-1/30 p-2.5 sm:p-3">
             <div className="flex items-stretch gap-1.5">
               <Select
                 value={draft.method}
@@ -778,7 +778,7 @@ export function RequestsView() {
               >
                 <SelectTrigger
                   className={cn(
-                    'h-10 w-[104px] shrink-0 rounded-lg font-mono text-xs font-bold',
+                    'h-10 w-[104px] shrink-0 rounded-lg border-border/80 bg-surface-2/60 font-mono text-[11px] font-bold tracking-[0.06em]',
                     METHOD_TONE[draft.method],
                   )}
                   aria-label="HTTP method"
@@ -808,7 +808,7 @@ export function RequestsView() {
                   aria-label="Request URL"
                   spellCheck={false}
                   autoComplete="off"
-                  className="h-10 rounded-lg pr-9 font-mono text-xs"
+                  className="h-10 rounded-lg border-border/80 bg-surface-2/60 pr-9 font-mono text-xs"
                 />
                 {draft.url ? (
                   <button
@@ -828,17 +828,23 @@ export function RequestsView() {
                   className="h-10 shrink-0 gap-1.5 rounded-lg px-4 text-xs"
                   onClick={handleCancel}
                 >
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                   Cancel
                 </Button>
               ) : (
                 <Button
-                  className="h-10 shrink-0 gap-1.5 rounded-lg px-4 text-xs font-semibold"
+                  className="press h-10 shrink-0 gap-1.5 rounded-lg px-4 text-xs font-semibold shadow-elev"
                   onClick={() => void handleSend()}
                   title="Send (Ctrl/Cmd + Enter)"
                 >
-                  <Send className="h-3.5 w-3.5" />
+                  <Send className="h-3.5 w-3.5" aria-hidden="true" />
                   Send
+                  <kbd
+                    aria-hidden="true"
+                    className="ml-1 hidden rounded border border-primary-foreground/25 bg-primary-foreground/10 px-1 py-px font-mono text-[9px] font-normal leading-none sm:inline-block"
+                  >
+                    ⌘↵
+                  </kbd>
                 </Button>
               )}
             </div>
@@ -849,7 +855,7 @@ export function RequestsView() {
                   <Variable className="h-3 w-3" />
                   {activeEnvironment.name}
                   <span className="opacity-60">·</span>
-                  <code className="font-mono">{resolvedPreview || '—'}</code>
+                  <code className="truncate rounded bg-surface-2/70 px-1 py-px font-mono text-[10px]">{resolvedPreview || '—'}</code>
                 </span>
               ) : (
                 <button
@@ -906,30 +912,30 @@ export function RequestsView() {
                 className="flex min-h-0 flex-1 flex-col"
               >
                 <div className="flex items-center justify-between border-b border-border/70 px-2.5 py-1.5">
-                  <TabsList className="h-8 rounded-lg bg-muted/50 p-0.5">
-                    <TabsTrigger value="params" className="h-7 rounded-md px-2.5 text-xs">
+                  <TabsList>
+                    <TabsTrigger value="params" className="px-2.5 text-xs">
                       Params
                       {draft.params.filter((r) => r.enabled && r.key.trim()).length > 0 ? (
-                        <span className="ml-1 rounded bg-background/70 px-1 font-mono text-[10px]">
+                        <span className="ml-1.5 rounded bg-foreground/[0.07] px-1 py-px font-mono text-[10px] tabular-nums">
                           {draft.params.filter((r) => r.enabled && r.key.trim()).length}
                         </span>
                       ) : null}
                     </TabsTrigger>
-                    <TabsTrigger value="headers" className="h-7 rounded-md px-2.5 text-xs">
+                    <TabsTrigger value="headers" className="px-2.5 text-xs">
                       Headers
                       {draft.headers.filter((r) => r.enabled && r.key.trim()).length > 0 ? (
-                        <span className="ml-1 rounded bg-background/70 px-1 font-mono text-[10px]">
+                        <span className="ml-1.5 rounded bg-foreground/[0.07] px-1 py-px font-mono text-[10px] tabular-nums">
                           {draft.headers.filter((r) => r.enabled && r.key.trim()).length}
                         </span>
                       ) : null}
                     </TabsTrigger>
-                    <TabsTrigger value="body" className="h-7 rounded-md px-2.5 text-xs">
+                    <TabsTrigger value="body" className="px-2.5 text-xs">
                       Body
                       {draft.bodyMode !== 'none' ? (
                         <span className="ml-1 h-1.5 w-1.5 rounded-full bg-primary" />
                       ) : null}
                     </TabsTrigger>
-                    <TabsTrigger value="auth" className="h-7 rounded-md px-2.5 text-xs">
+                    <TabsTrigger value="auth" className="px-2.5 text-xs">
                       Auth
                       {draft.auth.mode !== 'none' ? (
                         <span className="ml-1 h-1.5 w-1.5 rounded-full bg-primary" />
@@ -969,7 +975,7 @@ export function RequestsView() {
                       addLabel="Add header"
                       emptyHint="No custom headers."
                     />
-                    <p className="mt-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+                    <p className="mt-3 rounded-xl border border-border/60 bg-surface-2/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
                       Some headers are controlled by the browser and cannot be overridden
                       (for example <code className="font-mono">Host</code>,
                       <code className="ml-1 font-mono">Origin</code> and
@@ -1227,13 +1233,11 @@ export function RequestsView() {
               </Tabs>
             </div>
 
-            <div className="flex min-h-0 flex-col p-2.5 sm:p-3">
+            <div className="flex min-h-0 flex-col bg-surface-1/20 p-2.5 sm:p-3">
               <div className="mb-2 flex items-center justify-between">
-                <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Response
-                </h2>
+                <h2 className="eyebrow">Response</h2>
                 {response ? (
-                  <span className="font-mono text-[10px] text-muted-foreground">
+                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
                     {new Date(response.receivedAt).toLocaleTimeString()}
                   </span>
                 ) : null}

@@ -125,7 +125,7 @@ export function ProfilesView() {
 
       {isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[0, 1, 2].map((i) => <div key={i} className="h-40 animate-pulse rounded-lg border border-border bg-card" />)}
+          {[0, 1, 2].map((i) => <div key={i} className="skeleton h-40 rounded-xl" />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/40 py-16 text-center">

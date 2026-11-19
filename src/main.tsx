@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
 import './profile-motion.css';
+import './styles/motion.css';
 
 const container = document.getElementById('root');
 

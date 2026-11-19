@@ -41,19 +41,20 @@ export function KeyValueEditor({
   const add = () => onChange([...rows, { id: newId(), key: '', value: '', enabled: true }]);
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       {rows.length === 0 && emptyHint ? (
-        <p className="rounded-lg border border-dashed border-border/70 px-3 py-6 text-center text-xs text-muted-foreground">
+        <p className="rounded-xl border border-dashed border-border/70 px-3 py-6 text-center text-xs text-muted-foreground">
           {emptyHint}
         </p>
       ) : null}
 
-      <div className="grid grid-cols-[24px_minmax(0,1fr)_minmax(0,1.2fr)_32px] items-center gap-2 px-1">
+      {/* Header row: labels line up with the input columns below. */}
+      <div className="hidden grid-cols-[20px_minmax(0,1fr)_minmax(0,1.2fr)_28px] items-center gap-2 px-1 pb-1 sm:grid">
         <span className="sr-only">Enabled</span>
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
           {keyPlaceholder}
         </span>
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
           {valuePlaceholder}
         </span>
         <span className="sr-only">Actions</span>
@@ -62,7 +63,7 @@ export function KeyValueEditor({
       {rows.map((row, index) => (
         <div
           key={row.id}
-          className="grid grid-cols-[24px_minmax(0,1fr)_minmax(0,1.2fr)_32px] items-center gap-2"
+          className="group grid grid-cols-[20px_minmax(0,1fr)_minmax(0,1.2fr)_28px] items-center gap-2 rounded-md px-1 py-0.5 transition-colors hover:bg-surface-2/50"
         >
           <Checkbox
             checked={row.enabled}
@@ -78,7 +79,7 @@ export function KeyValueEditor({
             spellCheck={false}
             autoComplete="off"
             className={cn(
-              'h-8 rounded-md font-mono text-xs',
+              'h-8 rounded-md border-transparent bg-surface-2/60 font-mono text-xs focus-visible:border-input focus-visible:bg-background',
               !row.enabled && 'opacity-50',
             )}
           />
@@ -90,19 +91,19 @@ export function KeyValueEditor({
             spellCheck={false}
             autoComplete="off"
             className={cn(
-              'h-8 rounded-md font-mono text-xs',
+              'h-8 rounded-md border-transparent bg-surface-2/60 font-mono text-xs focus-visible:border-input focus-visible:bg-background',
               !row.enabled && 'opacity-50',
             )}
           />
           <Button
             type="button"
             variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-md text-muted-foreground hover:text-destructive"
+            size="icon-sm"
+            className="h-7 w-7 rounded-md text-muted-foreground/60 opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
             onClick={() => remove(row.id)}
             aria-label={`Remove ${keyPlaceholder.toLowerCase()} row ${index + 1}`}
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
         </div>
       ))}
@@ -112,9 +113,9 @@ export function KeyValueEditor({
         variant="ghost"
         size="sm"
         onClick={add}
-        className="mt-1 h-7 gap-1.5 rounded-md px-2 text-xs text-muted-foreground hover:text-foreground"
+        className="mt-1 h-7 gap-1.5 rounded-md px-2 text-[11px] text-muted-foreground hover:text-foreground"
       >
-        <Plus className="h-3.5 w-3.5" />
+        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
         {addLabel}
       </Button>
     </div>

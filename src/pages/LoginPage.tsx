@@ -39,6 +39,13 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  /* Client-side only: the browser's own email rule, surfaced inline instead of
+     as a native tooltip. Never blocks a submit the server would have accepted. */
+  const [touched, setTouched] = useState(false);
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const emailError = touched && email.trim().length > 0 && !emailValid
+    ? 'Enter a complete email address, for example name@example.com'
+    : null;
 
   const { signIn, resendConfirmation, providers } = useAuth();
   const navigate = useNavigate();
@@ -60,7 +67,7 @@ export function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      await signIn(email, password);
+      await signIn(email.trim(), password);
       navigate(redirectTo, { replace: true });
     } catch (signInError) {
       setError(friendlyAuthError(signInError));
@@ -107,8 +114,8 @@ export function LoginPage() {
     >
       <div className="space-y-5">
         {notice ? (
-          <Alert className="animate-card-reveal border-emerald-500/25 bg-emerald-500/5">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <Alert className="animate-enter-sm border-success/25 bg-success/5">
+            <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
             <AlertDescription className="text-emerald-800 dark:text-emerald-200">
               {notice}
             </AlertDescription>
@@ -116,7 +123,7 @@ export function LoginPage() {
         ) : null}
 
         {error ? (
-          <Alert variant="destructive" className="animate-card-reveal">
+          <Alert variant="destructive" className="animate-enter-sm">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               <span className="font-medium">{error.message}</span>
@@ -173,19 +180,32 @@ export function LoginPage() {
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <div className="auth-input-wrap">
-              <Mail className="auth-input-icon" />
+              <Mail className="auth-input-icon" aria-hidden="true" />
               <Input
                 id="email"
                 type="email"
+                inputMode="email"
                 placeholder="name@example.com"
                 className="auth-input pl-10"
                 autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
+                onBlur={() => setTouched(true)}
+                aria-invalid={emailError ? true : undefined}
+                aria-describedby={emailError ? 'login-email-error' : undefined}
                 required
                 disabled={loading}
               />
             </div>
+            {emailError ? (
+              <p
+                id="login-email-error"
+                className="animate-enter-sm flex items-center gap-1.5 text-xs text-destructive"
+              >
+                <AlertCircle className="h-3 w-3 shrink-0" aria-hidden="true" />
+                {emailError}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -216,18 +236,24 @@ export function LoginPage() {
                 onClick={() => setShowPassword((value) => !value)}
                 className="auth-password-toggle focus-ring"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Eye className="h-4 w-4" aria-hidden="true" />
+                )}
               </button>
             </div>
           </div>
 
           <Button
             type="submit"
-            className="auth-submit-button h-12 w-full rounded-xl text-sm font-semibold shadow-lg shadow-primary/20"
+            className="auth-submit-button h-12 w-full rounded-xl text-sm font-semibold shadow-elev"
             disabled={loading}
+            aria-busy={loading}
           >
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : null}
             {loading ? 'Signing in…' : 'Sign in'}
           </Button>
         </form>

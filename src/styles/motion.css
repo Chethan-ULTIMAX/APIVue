@@ -1,0 +1,264 @@
+/* ============================================================
+   APIVUE MOTION LAYER
+   ------------------------------------------------------------
+   All animation lives here so it can be audited (and disabled)
+   in one place.
+
+   Principles
+   ----------
+   1. Motion explains a change of state; it never decorates idle UI.
+   2. Nothing animates for longer than 450ms.
+   3. Only `transform` and `opacity` are animated, so the compositor
+      handles it and layout is never invalidated mid-transition.
+   4. `prefers-reduced-motion` removes movement but keeps
+      opacity changes, so state feedback survives.
+
+   NOTE: this file deliberately contains no `@import` so it can be
+   imported after `index.css` without violating CSS import order.
+   ============================================================ */
+
+:root {
+  --stagger-step: 45ms;
+}
+
+/* ------------------------------------------------------------
+   0. OPT-IN VARIABLE
+   `.stagger` only sets the step; the delay list below is what
+   actually sequences children.
+   ------------------------------------------------------------ */
+
+.stagger {
+  --stagger-step: 45ms;
+}
+
+/* ------------------------------------------------------------
+   1. STAGGERED ENTRANCE
+   Use `.stagger` on a container and `.stagger-item` on children.
+   Items fade+rise in sequence. Capped at 10 children so a long
+   list never feels slow.
+   ------------------------------------------------------------ */
+
+.stagger-item {
+  animation: apivue-enter-sm 0.4s var(--ease-out) both;
+}
+
+.stagger > .stagger-item:nth-child(1) { animation-delay: calc(var(--stagger-step) * 0); }
+.stagger > .stagger-item:nth-child(2) { animation-delay: calc(var(--stagger-step) * 1); }
+.stagger > .stagger-item:nth-child(3) { animation-delay: calc(var(--stagger-step) * 2); }
+.stagger > .stagger-item:nth-child(4) { animation-delay: calc(var(--stagger-step) * 3); }
+.stagger > .stagger-item:nth-child(5) { animation-delay: calc(var(--stagger-step) * 4); }
+.stagger > .stagger-item:nth-child(6) { animation-delay: calc(var(--stagger-step) * 5); }
+.stagger > .stagger-item:nth-child(7) { animation-delay: calc(var(--stagger-step) * 6); }
+.stagger > .stagger-item:nth-child(8) { animation-delay: calc(var(--stagger-step) * 7); }
+.stagger > .stagger-item:nth-child(9) { animation-delay: calc(var(--stagger-step) * 8); }
+.stagger > .stagger-item:nth-child(n + 10) { animation-delay: calc(var(--stagger-step) * 9); }
+
+/* ------------------------------------------------------------
+   2. ROUTE TRANSITION
+   Applied to the <main> surface on every location change, keyed
+   by pathname so the animation replays. Deliberately short and
+   subtle: a full cross-fade on every click becomes tiring.
+   ------------------------------------------------------------ */
+
+.route-enter {
+  animation: apivue-route-in 0.28s var(--ease-out) both;
+}
+
+@keyframes apivue-route-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------------------------------------------------
+   3. SIDEBAR
+   ------------------------------------------------------------ */
+
+/* Sliding active indicator. The pill is positioned by the parent
+   via inline transform so it tracks the active item without
+   remounting (`transition` on a single element = no jank). */
+.nav-indicator {
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+  will-change: transform;
+}
+
+.nav-item-icon {
+  transition: transform var(--dur-base) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.nav-item:hover .nav-item-icon { transform: translateX(1px) scale(1.06); }
+.nav-item[data-active='true'] .nav-item-icon { transform: none; }
+
+/* ------------------------------------------------------------
+   4. BUTTON + CONTROL FEEDBACK
+   ------------------------------------------------------------ */
+
+.press {
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+.press:active:not(:disabled) { transform: translateY(1px) scale(0.995); }
+
+/* Indeterminate progress bar for in-flight work. Uses a
+   background-position sweep, so it costs nothing to run. */
+.progress-track {
+  position: relative;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: hsl(var(--border));
+}
+
+.progress-sweep {
+  background-image: linear-gradient(
+    90deg,
+    hsl(var(--primary) / 0) 0%,
+    hsl(var(--primary) / 0.9) 50%,
+    hsl(var(--primary) / 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: apivue-shimmer 1.1s linear infinite;
+}
+
+/* Shimmer skeleton — replaces `animate-pulse` for large blocks
+   because opacity pulsing on a big area is visually noisy. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: hsl(var(--muted));
+  border-radius: 6px;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--foreground) / 0.06),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: apivue-shimmer 1.6s ease-in-out infinite;
+}
+
+/* Success/error flash used after copy actions. */
+.flash-ok { animation: apivue-flash-ok 0.6s var(--ease-out); }
+@keyframes apivue-flash-ok {
+  0% { box-shadow: 0 0 0 0 hsl(var(--success) / 0.5); }
+  100% { box-shadow: 0 0 0 6px hsl(var(--success) / 0); }
+}
+
+/* ------------------------------------------------------------
+   5. EXPAND / COLLAPSE
+   Radix exposes `--radix-collapsible-content-height` and the
+   accordion exposes its own variable; both are used directly so
+   the content height is real, not a guessed max-height.
+   ------------------------------------------------------------ */
+
+[data-state='open'] > .collapse-body,
+.collapse-body[data-state='open'] {
+  animation: apivue-collapse-open 0.22s var(--ease-out);
+}
+[data-state='closed'] > .collapse-body,
+.collapse-body[data-state='closed'] {
+  animation: apivue-collapse-close 0.18s var(--ease-out);
+}
+
+@keyframes apivue-collapse-open {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes apivue-collapse-close {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
+/* ------------------------------------------------------------
+   6. REQUEST LIFECYCLE
+   The response panel animates in only when a real response
+   arrives. It is never shown as a placeholder, so the motion
+   always corresponds to an actual state change.
+   ------------------------------------------------------------ */
+
+.response-enter {
+  animation: apivue-response-in 0.32s var(--ease-out) both;
+}
+
+@keyframes apivue-response-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Pulsing dot shown while a request is genuinely in flight. */
+.live-dot {
+  position: relative;
+  border-radius: 999px;
+  animation: apivue-pulse-ring 1.6s var(--ease-out) infinite;
+}
+
+/* ------------------------------------------------------------
+   7. FOCUS VISIBILITY
+   Keyboard users always get a clear ring; pointer users do not,
+   which is why this is on :focus-visible only.
+   ------------------------------------------------------------ */
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid hsl(var(--ring) / 0.7);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   8. REDUCED MOTION
+   Movement and looping animation is removed entirely. Opacity
+   transitions are kept so feedback still reads.
+   ------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Keep entrance states at their *final* values rather than
+     mid-animation, so nothing is left invisible. */
+  .stagger-item,
+  .route-enter,
+  .response-enter,
+  .animate-enter,
+  .animate-enter-sm,
+  .animate-fade,
+  .animate-scale-in,
+  .animate-card-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .skeleton::after,
+  .progress-sweep,
+  .live-dot,
+  .animate-demo-shine,
+  .apivue-flow-packet,
+  .apivue-core {
+    animation: none !important;
+  }
+
+  .surface-lift:hover,
+  .press:active:not(:disabled),
+  .nav-item:hover .nav-item-icon {
+    transform: none !important;
+  }
+
+  .scroll-reveal { opacity: 1; transform: none; transition: none; }
+}

@@ -75,10 +75,10 @@ export function TimeRangeChart({ points, tone = 'hsl(var(--primary))', title = '
   const hasData = points.length > 0;
 
   return (
-    <div className="rounded-3xl border border-border bg-card/70 p-5 shadow-sm sm:p-6">
+    <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-elev sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-primary"><Activity className="h-4 w-4" /><span className="text-[11px] font-bold uppercase tracking-[0.18em]">Timeline analytics</span></div>
+          <div className="flex items-center gap-2 text-primary"><Activity className="h-4 w-4" aria-hidden="true" /><span className="eyebrow text-primary/90">Timeline analytics</span></div>
           <h3 className="mt-2 text-lg font-bold">{title}</h3>
           <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
         </div>
@@ -91,21 +91,43 @@ export function TimeRangeChart({ points, tone = 'hsl(var(--primary))', title = '
               <AreaChart data={chart} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
                 <defs><linearGradient id="apivueRangeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={tone} stopOpacity={0.32} /><stop offset="100%" stopColor={tone} stopOpacity={0.02} /></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(value) => shortDate(String(value), range)} minTickGap={28} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 10 }} width={34} />
-                <Tooltip contentStyle={{ borderRadius: 14, border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }} labelFormatter={(value) => new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { dateStyle: 'medium' })} formatter={(value) => [Number(value).toLocaleString(), 'Activity']} />
-                <Area type="monotone" dataKey="count" stroke={tone} fill="url(#apivueRangeFill)" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 2 }} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(value) => shortDate(String(value), range)} minTickGap={28} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={34} />
+                <Tooltip
+                  cursor={{ stroke: 'hsl(var(--border))' }}
+                  contentStyle={{
+                    borderRadius: 12,
+                    border: '1px solid hsl(var(--border))',
+                    background: 'hsl(var(--popover))',
+                    color: 'hsl(var(--popover-foreground))',
+                    boxShadow: 'var(--elev-2)',
+                    fontSize: 12,
+                  }}
+                  labelFormatter={(value) => new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                  formatter={(value) => [Number(value).toLocaleString(), 'Activity']}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="count"
+                  stroke={tone}
+                  fill="url(#apivueRangeFill)"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4, strokeWidth: 2 }}
+                  animationDuration={450}
+                  animationEasing="ease-out"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
           <div className="mt-4 grid grid-cols-3 gap-2">
-            <div className="rounded-2xl border border-border bg-background/50 p-3"><p className="text-[10px] uppercase tracking-wider text-muted-foreground">Activity</p><p className="mt-1 text-lg font-bold">{total.toLocaleString()}</p></div>
-            <div className="rounded-2xl border border-border bg-background/50 p-3"><p className="text-[10px] uppercase tracking-wider text-muted-foreground">Active days</p><p className="mt-1 text-lg font-bold">{activeDays.toLocaleString()}</p></div>
-            <div className="rounded-2xl border border-border bg-background/50 p-3"><p className="text-[10px] uppercase tracking-wider text-muted-foreground">Peak day</p><p className="mt-1 truncate text-lg font-bold">{peak.count ? peak.count.toLocaleString() : '—'}</p></div>
+            <div className="rounded-xl border border-border/70 bg-surface-2/50 p-3"><p className="eyebrow">Activity</p><p className="mt-1 text-lg font-semibold tabular-nums">{total.toLocaleString()}</p></div>
+            <div className="rounded-xl border border-border/70 bg-surface-2/50 p-3"><p className="eyebrow">Active days</p><p className="mt-1 text-lg font-semibold tabular-nums">{activeDays.toLocaleString()}</p></div>
+            <div className="rounded-xl border border-border/70 bg-surface-2/50 p-3"><p className="eyebrow">Peak day</p><p className="mt-1 truncate text-lg font-semibold tabular-nums">{peak.count ? peak.count.toLocaleString() : '—'}</p></div>
           </div>
         </>
       ) : (
-        <div className="mt-5 flex min-h-56 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 p-8 text-center">
+        <div className="mt-5 flex min-h-56 items-center justify-center rounded-xl border border-dashed border-border/80 bg-surface-2/30 p-8 text-center">
           <div><Sparkles className="mx-auto h-7 w-7 text-muted-foreground/40" /><p className="mt-3 text-sm font-semibold">No dated activity returned</p><p className="mt-1 max-w-md text-xs leading-5 text-muted-foreground">This chart never invents activity. Connect or refresh the source when it exposes a dated history.</p></div>
         </div>
       )}
@@ -129,7 +151,7 @@ export function GitHubContributionImage({ username, joinedAt }: { username: stri
   const url = `https://github.com/users/${encodeURIComponent(username)}/contributions?from=${from}&to=${to}`;
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-emerald-500/20 bg-card/80 shadow-lg shadow-emerald-500/5">
+    <section className="overflow-hidden rounded-2xl border border-emerald-500/20 bg-card/80 shadow-lg shadow-emerald-500/5">
       <div className="border-b border-border bg-gradient-to-r from-emerald-500/10 via-transparent to-transparent p-5 sm:p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="flex items-start gap-3">

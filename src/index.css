@@ -1,127 +1,412 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   APIVUE DESIGN SYSTEM — TOKENS
+   ------------------------------------------------------------
+   A single coherent palette for both themes. Every surface,
+   border and accent in the app resolves to one of these tokens,
+   so a theme change is a one-line edit rather than a hunt
+   through components.
+
+   Identity: deep charcoal with a blue-violet bias, one electric
+   indigo primary, and a restrained cyan used only for data.
+   ============================================================ */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 228 14% 10%;
+    /* Canvas + layered surfaces (light) */
+    --background: 228 30% 98%;
+    --foreground: 228 22% 12%;
+
+    --surface-1: 0 0% 100%;
+    --surface-2: 228 28% 99%;
+    --surface-3: 228 22% 96%;
+
     --card: 0 0% 100%;
-    --card-foreground: 228 14% 10%;
+    --card-foreground: 228 22% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 228 14% 10%;
-    --primary: 245 82% 59%;
+    --popover-foreground: 228 22% 12%;
+
+    /* Brand */
+    --primary: 258 84% 58%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 228 14% 18%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 45%;
-    --accent: 220 14% 94%;
-    --accent-foreground: 228 14% 10%;
-    --destructive: 0 72% 51%;
+    /* Paired accent — data highlights only, never chrome. */
+    --accent-2: 194 88% 42%;
+
+    --secondary: 228 24% 96%;
+    --secondary-foreground: 228 22% 20%;
+    --muted: 228 24% 96%;
+    --muted-foreground: 228 12% 44%;
+    --accent: 258 40% 96%;
+    --accent-foreground: 258 40% 22%;
+
+    /* Status */
+    --destructive: 356 72% 52%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 16% 89%;
-    --input: 220 16% 89%;
-    --ring: 245 82% 59%;
-    --radius: 0.8rem;
-    --sidebar-background: 225 20% 98%;
-    --sidebar-foreground: 220 10% 35%;
-    --sidebar-primary: 245 82% 59%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 94%;
-    --sidebar-accent-foreground: 228 14% 10%;
-    --sidebar-border: 220 16% 89%;
-    --sidebar-ring: 245 82% 59%;
-    --success: 142 71% 45%;
+    --success: 154 62% 38%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 32 88% 46%;
     --warning-foreground: 0 0% 100%;
-    --info: 199 89% 48%;
+    --info: 199 84% 42%;
     --info-foreground: 0 0% 100%;
+
+    /* Lines + focus */
+    --border: 228 18% 90%;
+    --input: 228 18% 89%;
+    --ring: 258 84% 58%;
+
+    /* Shape */
+    --radius: 0.75rem;
+
+    /* Sidebar */
+    --sidebar-background: 228 28% 97%;
+    --sidebar-foreground: 228 12% 38%;
+    --sidebar-primary: 258 84% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 258 40% 95%;
+    --sidebar-accent-foreground: 228 22% 14%;
+    --sidebar-border: 228 18% 90%;
+    --sidebar-ring: 258 84% 58%;
+
+    /* Elevation — tinted with the canvas hue, not neutral grey,
+       so shadows read as depth rather than dirt. */
+    --elev-1: 0 1px 2px 0 hsl(228 30% 20% / 0.06);
+    --elev-2: 0 2px 4px -1px hsl(228 30% 20% / 0.08), 0 1px 2px -1px hsl(228 30% 20% / 0.06);
+    --elev-3: 0 12px 28px -12px hsl(228 40% 20% / 0.18), 0 2px 6px -2px hsl(228 30% 20% / 0.08);
+
+    /* Motion */
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --dur-fast: 120ms;
+    --dur-base: 200ms;
+    --dur-slow: 320ms;
   }
 
   .dark {
-    --background: 230 22% 8%;
-    --foreground: 220 14% 90%;
-    --card: 230 20% 11%;
-    --card-foreground: 220 14% 90%;
-    --popover: 230 19% 14%;
-    --popover-foreground: 220 14% 90%;
-    --secondary: 230 18% 17%;
-    --secondary-foreground: 220 14% 80%;
-    --muted: 230 18% 15%;
-    --muted-foreground: 220 10% 55%;
-    --accent: 230 18% 20%;
-    --accent-foreground: 220 14% 90%;
-    --border: 230 18% 22%;
-    --input: 230 18% 22%;
-    --sidebar-background: 231 25% 6%;
-    --sidebar-foreground: 220 10% 55%;
-    --sidebar-accent: 230 19% 13%;
-    --sidebar-accent-foreground: 220 14% 90%;
-    --sidebar-border: 230 18% 16%;
+    --background: 229 20% 6%;
+    --foreground: 220 16% 93%;
+
+    /* Deliberate four-step surface ladder. Contrast between
+       steps is small (≈2–3% L) so stacking never looks striped. */
+    --surface-1: 229 18% 9%;
+    --surface-2: 229 16% 12%;
+    --surface-3: 229 15% 16%;
+
+    --card: 229 18% 9%;
+    --card-foreground: 220 16% 93%;
+    --popover: 229 17% 11%;
+    --popover-foreground: 220 16% 93%;
+
+    --primary: 258 90% 68%;
+    --primary-foreground: 229 40% 8%;
+    --accent-2: 190 92% 62%;
+
+    --secondary: 229 15% 15%;
+    --secondary-foreground: 220 14% 84%;
+    --muted: 229 15% 13%;
+    --muted-foreground: 220 11% 60%;
+    --accent: 229 15% 17%;
+    --accent-foreground: 220 16% 93%;
+
+    --destructive: 356 76% 62%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 56% 52%;
+    --success-foreground: 150 40% 8%;
+    --warning: 36 92% 62%;
+    --warning-foreground: 30 40% 10%;
+    --info: 194 88% 62%;
+    --info-foreground: 200 40% 8%;
+
+    --border: 228 14% 18%;
+    --input: 228 14% 20%;
+    --ring: 258 90% 68%;
+
+    --sidebar-background: 230 22% 5%;
+    --sidebar-foreground: 220 11% 62%;
+    --sidebar-primary: 258 90% 68%;
+    --sidebar-primary-foreground: 229 40% 8%;
+    --sidebar-accent: 229 16% 12%;
+    --sidebar-accent-foreground: 220 16% 93%;
+    --sidebar-border: 228 14% 14%;
+    --sidebar-ring: 258 90% 68%;
+
+    --elev-1: 0 1px 2px 0 hsl(229 40% 2% / 0.5);
+    --elev-2: 0 2px 6px -1px hsl(229 40% 2% / 0.6), 0 1px 2px -1px hsl(229 40% 2% / 0.5);
+    --elev-3: 0 16px 40px -16px hsl(229 50% 2% / 0.75), 0 4px 12px -4px hsl(229 40% 2% / 0.5);
   }
 }
 
 @layer base {
   * { @apply border-border; }
-  html { color-scheme: light; font-synthesis: none; text-rendering: optimizeLegibility; scroll-behavior: smooth; }
+
+  html {
+    color-scheme: light;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    /* Prevent horizontal jitter from any wide code block. */
+    overflow-x: hidden;
+  }
+
   html.dark { color-scheme: dark; }
-  body { @apply bg-background text-foreground font-sans antialiased; min-width: 320px; background-image: radial-gradient(circle at 15% -10%, hsl(var(--primary) / 0.055), transparent 34rem); }
-  ::selection { background: hsl(var(--primary) / 0.22); color: hsl(var(--foreground)); }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    min-width: 320px;
+    /* A single soft light source anchored top-left, using the brand
+       hue at very low alpha. Gives flat dark surfaces dimension
+       without the cost of blur filters. */
+    background-image:
+      radial-gradient(70rem 40rem at 12% -12%, hsl(var(--primary) / 0.07), transparent 60%),
+      radial-gradient(50rem 30rem at 100% 0%, hsl(var(--accent-2) / 0.04), transparent 55%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.24);
+    color: hsl(var(--foreground));
+  }
+
   button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+
+  /* Typography rhythm: headings tighten, body stays readable. */
+  h1, h2, h3, h4 { letter-spacing: -0.02em; text-wrap: balance; }
+  p { text-wrap: pretty; }
+
+  /* Numbers in stats should never shift width as they animate. */
+  .tabular, [data-numeric] { font-variant-numeric: tabular-nums; }
 }
 
 @layer components {
-  .surface-card { @apply rounded-xl border border-border/75 bg-card shadow-sm; transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
-  .surface-card:hover { border-color: hsl(var(--border)); box-shadow: 0 10px 30px -24px hsl(var(--foreground) / 0.45); }
-  .eyebrow { @apply text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground; }
-  .focus-ring { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background; }
-  .interactive { transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease; }
-  .interactive:hover { transform: translateY(-1px); }
+  /* ----------------------------------------------------------
+     SURFACES
+     ---------------------------------------------------------- */
+
+  .surface-card {
+    @apply rounded-xl border border-border/70 bg-card;
+    box-shadow: var(--elev-1);
+    transition:
+      border-color var(--dur-base) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out);
+  }
+
+  .surface-card:hover {
+    border-color: hsl(var(--border));
+    box-shadow: var(--elev-2);
+  }
+
+  /* Interactive card: lifts 2px, never scales — scaling text
+     looks cheap and causes subpixel shimmer. */
+  .surface-lift {
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out);
+    will-change: transform;
+  }
+
+  .surface-lift:hover {
+    transform: translateY(-2px);
+    border-color: hsl(var(--primary) / 0.3);
+    box-shadow: var(--elev-3);
+  }
+
+  .surface-inset {
+    @apply rounded-lg border border-border/60 bg-surface-3;
+    box-shadow: inset 0 1px 0 0 hsl(var(--foreground) / 0.03);
+  }
+
+  /* Focus ring used by every interactive surface. */
+  .focus-ring {
+    @apply focus-visible:outline-none;
+    transition: box-shadow var(--dur-fast) var(--ease-out);
+  }
+  .focus-ring:focus-visible {
+    box-shadow:
+      0 0 0 2px hsl(var(--background)),
+      0 0 0 4px hsl(var(--ring) / 0.55);
+    border-radius: inherit;
+  }
+
+  .eyebrow {
+    @apply text-[10px] font-semibold uppercase text-muted-foreground;
+    letter-spacing: 0.14em;
+  }
+
+  .interactive {
+    transition:
+      background-color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  /* ----------------------------------------------------------
+     CODE — shared presentation for JSON, cURL and raw bodies
+     ---------------------------------------------------------- */
+
+  .code-surface {
+    @apply rounded-lg border border-border/60 bg-surface-3 font-mono;
+    font-size: 12px;
+    line-height: 1.65;
+    tab-size: 2;
+  }
+
+  /* Minimal, dependency-free JSON token colours. Deliberately
+     low-chroma so a large payload never becomes a rainbow. */
+  .tok-key { color: hsl(var(--primary)); }
+  .tok-string { color: hsl(152 50% 48%); }
+  .tok-number { color: hsl(28 85% 60%); }
+  .tok-boolean { color: hsl(194 85% 60%); }
+  .tok-null { color: hsl(var(--muted-foreground)); font-style: italic; }
+  .tok-punct { color: hsl(var(--muted-foreground) / 0.75); }
+
+  :root .tok-string { color: hsl(154 58% 32%); }
+  :root .tok-number { color: hsl(24 82% 42%); }
+  :root .tok-boolean { color: hsl(199 82% 34%); }
+
+  /* ----------------------------------------------------------
+     STATUS LANGUAGE — one vocabulary for every surface
+     ---------------------------------------------------------- */
+
+  .status-ok { @apply border-success/30 bg-success/10 text-success; }
+  .status-info { @apply border-info/30 bg-info/10 text-info; }
+  .status-warn { @apply border-warning/30 bg-warning/10 text-warning; }
+  .status-error { @apply border-destructive/30 bg-destructive/10 text-destructive; }
+  .status-neutral { @apply border-border/70 bg-muted/50 text-muted-foreground; }
 }
 
 @layer utilities {
-  .font-mono-id { font-family: 'JetBrains Mono', monospace; }
-  .scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--border)) transparent; }
-  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .font-mono-id { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-  .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background-color: hsl(var(--muted-foreground) / 0.5); }
+
+  .text-gradient {
+    background: linear-gradient(100deg, hsl(var(--foreground)), hsl(var(--primary)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Hairline divider that fades at both ends. */
+  .divider-fade {
+    background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
+    height: 1px;
+  }
+
+  /* Data grid texture for hero/empty surfaces. Pure gradient,
+     no images, no blur. */
+  .grid-texture {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.45) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.45) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(70% 60% at 50% 40%, black, transparent);
+  }
 }
 
-@keyframes demo-shine { 0%, 75% { transform: translateX(-130%) skewX(-20deg); } 85%, 100% { transform: translateX(130%) skewX(-20deg); } }
-.animate-demo-shine { animation: demo-shine 5s ease-in-out infinite; }
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+
+@keyframes apivue-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes apivue-enter-sm {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes apivue-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes apivue-scale-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes apivue-shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+@keyframes apivue-pulse-ring {
+  0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.32); }
+  70% { box-shadow: 0 0 0 8px hsl(var(--primary) / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
+}
+
+@keyframes apivue-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
 @keyframes apivue-node-pulse { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
 @keyframes apivue-core-pulse { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.1); } }
 @keyframes apivue-flow { from { transform: translateX(-120%); opacity: 0; } 15%, 75% { opacity: 1; } to { transform: translateX(360%); opacity: 0; } }
 @keyframes apivue-glow { 0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); } 50% { box-shadow: 0 0 28px 4px hsl(var(--primary) / 0.14); } }
 @keyframes apivue-card-reveal { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
-.animate-card-reveal { animation: apivue-card-reveal 0.4s ease-out both; }
+
+.animate-card-reveal { animation: apivue-card-reveal 0.4s var(--ease-out) both; }
+.animate-enter { animation: apivue-enter 0.45s var(--ease-out) both; }
+.animate-enter-sm { animation: apivue-enter-sm 0.28s var(--ease-out) both; }
+.animate-fade { animation: apivue-fade 0.3s var(--ease-out) both; }
+.animate-scale-in { animation: apivue-scale-in 0.24s var(--ease-out) both; }
+
+/* ============================================================
+   LEAVE THE LANDING PAGE'S OWN STYLES INTACT BELOW.
+   They are scoped to `body.apivue-landing` and must not be
+   rewritten here; only the accent constants are aligned to the
+   new brand hue for coherence.
+   ============================================================ */
+
+@keyframes demo-shine { 0%, 75% { transform: translateX(-130%) skewX(-20deg); } 85%, 100% { transform: translateX(130%) skewX(-20deg); } }
+.animate-demo-shine { animation: demo-shine 5s ease-in-out infinite; }
 .scroll-reveal { opacity: 0; transform: translateY(12px); transition: opacity 0.4s ease-out, transform 0.4s ease-out; }
 .scroll-reveal.scroll-revealed { opacity: 1; transform: translateY(0); }
 [data-card-hover] { transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out; }
 
 /* APIVue landing experience */
 .apivue-enhanced-header { transition: background-color 300ms ease, border-color 300ms ease, box-shadow 300ms ease, transform 300ms ease; }
-.apivue-header-scrolled { background: rgba(8, 10, 15, 0.92) !important; border-color: rgba(139, 92, 246, 0.18) !important; box-shadow: 0 10px 35px -28px rgba(0,0,0,.9), 0 0 35px -28px rgba(139,92,246,.7); }
+.apivue-header-scrolled { background: rgba(8, 10, 15, 0.92) !important; border-color: rgba(124, 92, 246, 0.18) !important; box-shadow: 0 10px 35px -28px rgba(0,0,0,.9), 0 0 35px -28px rgba(124,92,246,.7); }
 .apivue-landing header a[href^="#"] { position: relative; transition: color 220ms ease, transform 220ms ease, opacity 220ms ease; }
 .apivue-landing header a[href^="#"]::after { content: ''; position: absolute; left: 50%; right: 50%; bottom: -9px; height: 2px; border-radius: 999px; background: linear-gradient(90deg, transparent, currentColor, transparent); opacity: 0; transition: left 260ms ease, right 260ms ease, opacity 260ms ease; }
 .apivue-landing header a[href^="#"].apivue-nav-active { color: #fff !important; transform: translateY(-1px); }
 .apivue-landing header a[href^="#"].apivue-nav-active::after { left: 10%; right: 10%; opacity: .9; }
 .apivue-enhanced-footer { position: relative; overflow: hidden; }
-.apivue-enhanced-footer::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 0%, rgba(139,92,246,.12), transparent 48%); opacity: .9; }
-.apivue-star-cta { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; width: min(100%, 420px); margin: 22px auto 0; padding: 14px 16px; border: 1px solid rgba(139,92,246,.22); border-radius: 16px; background: rgba(255,255,255,.035); color: inherit; text-decoration: none; box-shadow: 0 0 0 1px rgba(255,255,255,.02) inset; transition: transform 220ms ease, border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease; }
-.apivue-star-cta:hover { transform: translateY(-3px); border-color: rgba(167,139,250,.5); background: rgba(139,92,246,.09); box-shadow: 0 16px 45px -28px rgba(139,92,246,.8); }
-.apivue-star-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 10px; background: rgba(139,92,246,.14); color: #c4b5fd; font-size: 18px; }
+.apivue-enhanced-footer::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 0%, rgba(124,92,246,.12), transparent 48%); opacity: .9; }
+.apivue-star-cta { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; width: min(100%, 420px); margin: 22px auto 0; padding: 14px 16px; border: 1px solid rgba(124,92,246,.22); border-radius: 16px; background: rgba(255,255,255,.035); color: inherit; text-decoration: none; box-shadow: 0 0 0 1px rgba(255,255,255,.02) inset; transition: transform 220ms ease, border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease; }
+.apivue-star-cta:hover { transform: translateY(-3px); border-color: rgba(150,124,250,.5); background: rgba(124,92,246,.09); box-shadow: 0 16px 45px -28px rgba(124,92,246,.8); }
+.apivue-star-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 10px; background: rgba(124,92,246,.14); color: #c4b5fd; font-size: 18px; }
 .apivue-star-cta strong { display: block; font-size: 13px; font-weight: 650; }
 .apivue-star-cta small { display: block; margin-top: 2px; color: rgba(161,161,170,.8); font-size: 10px; }
 .apivue-star-arrow { margin-left: auto; font-size: 16px; opacity: .65; transition: transform 220ms ease, opacity 220ms ease; }
 .apivue-star-cta:hover .apivue-star-arrow { transform: translate(2px,-2px); opacity: 1; }
 
 /* The landing page uses a dark visual system; these overrides make the theme toggle truly switch the entire experience. */
-html.apivue-landing-light body.apivue-landing { background: #f7f8fc !important; background-image: radial-gradient(circle at 15% -10%, rgba(124,58,237,.08), transparent 34rem) !important; color: #171923 !important; }
+html.apivue-landing-light body.apivue-landing { background: #f7f8fc !important; background-image: radial-gradient(circle at 15% -10%, rgba(124,92,246,.08), transparent 34rem) !important; color: #171923 !important; }
 html.apivue-landing-light body.apivue-landing header { background: rgba(247,248,252,.88) !important; border-color: rgba(17,24,39,.09) !important; color: #171923 !important; }
 html.apivue-landing-light body.apivue-landing .bg-\[\#080a0f\] { background: #f7f8fc !important; }
 html.apivue-landing-light body.apivue-landing [class*="text-white"] { color: #171923 !important; }
@@ -129,14 +414,6 @@ html.apivue-landing-light body.apivue-landing [class*="text-zinc-300"] { color: 
 html.apivue-landing-light body.apivue-landing [class*="text-zinc-400"] { color: #666b78 !important; }
 html.apivue-landing-light body.apivue-landing [class*="border-white/"] { border-color: rgba(17,24,39,.10) !important; }
 html.apivue-landing-light body.apivue-landing [class*="bg-white/"] { background-color: rgba(17,24,39,.035) !important; }
-html.apivue-landing-light body.apivue-landing .apivue-header-scrolled { background: rgba(247,248,252,.96) !important; border-color: rgba(124,58,237,.16) !important; box-shadow: 0 10px 35px -28px rgba(17,24,39,.3) !important; }
+html.apivue-landing-light body.apivue-landing .apivue-header-scrolled { background: rgba(247,248,252,.96) !important; border-color: rgba(124,92,246,.16) !important; box-shadow: 0 10px 35px -28px rgba(17,24,39,.3) !important; }
 html.apivue-landing-light body.apivue-landing header a[href^="#"].apivue-nav-active { color: #5b21b6 !important; }
-html.apivue-landing-light body.apivue-landing .apivue-star-cta { background: rgba(17,24,39,.025); border-color: rgba(124,58,237,.2); }
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-demo-shine, .animate-card-reveal { animation: none; }
-  .apivue-flow-packet, .apivue-core { animation: none !important; }
-  .interactive:hover { transform: none; }
-  .scroll-reveal { opacity: 1; transform: none; transition: none; }
-  .apivue-landing header a[href^="#"], .apivue-star-cta { transition: none; }
-}
+html.apivue-landing-light body.apivue-landing .apivue-star-cta { background: rgba(17,24,39,.025); border-color: rgba(124,92,246,.2); }

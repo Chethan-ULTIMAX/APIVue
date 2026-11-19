@@ -41,7 +41,7 @@ export function SignupPage() {
 
     setLoading(true);
     try {
-      const hasSession = await signUp(email, password, name);
+      const hasSession = await signUp(email.trim(), password, name.trim());
       if (hasSession) {
         // Email confirmation is disabled on this project: the user is signed in.
         navigate(redirectTo, { replace: true });
@@ -79,7 +79,7 @@ export function SignupPage() {
     >
       <div className="space-y-5">
         {error ? (
-          <Alert variant="destructive" className="animate-card-reveal">
+          <Alert variant="destructive" className="animate-enter-sm">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               <span className="font-medium">{error.message}</span>

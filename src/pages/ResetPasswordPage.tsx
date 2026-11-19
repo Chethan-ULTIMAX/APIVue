@@ -120,8 +120,12 @@ export function ResetPasswordPage() {
 
   if (checking) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
+      <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/.07),transparent_32rem)]"
+          aria-hidden="true"
+        />
+        <Card className="relative w-full max-w-md border-border/80 shadow-elev-lg">
           <CardContent className="p-8 text-center">
             <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
             <p className="mt-3 text-sm text-muted-foreground">
@@ -135,8 +139,12 @@ export function ResetPasswordPage() {
 
   if (!recoveryReady) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
+      <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/.07),transparent_32rem)]"
+          aria-hidden="true"
+        />
+        <Card className="relative w-full max-w-md border-border/80 shadow-elev-lg">
           <CardContent className="p-8 text-center">
             <AlertCircle className="mx-auto h-6 w-6 text-muted-foreground" />
             <p className="mt-3 text-sm text-muted-foreground">
@@ -151,16 +159,20 @@ export function ResetPasswordPage() {
   /* ---------- Form ---------- */
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/.07),transparent_32rem)]"
+        aria-hidden="true"
+      />
+      <Card className="animate-enter-up relative w-full max-w-md border-border/80 shadow-elev-lg">
         <CardHeader className="space-y-1 text-center">
           <div className="mb-2 flex justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <KeyRound className="h-6 w-6 text-primary" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+              <KeyRound className="h-6 w-6 text-primary" aria-hidden="true" />
             </div>
           </div>
 
-          <CardTitle className="text-2xl">Set a new password</CardTitle>
+          <CardTitle className="text-2xl font-semibold tracking-tight">Set a new password</CardTitle>
           <CardDescription>
             Choose a strong password for your APIVue account.
           </CardDescription>
@@ -169,7 +181,7 @@ export function ResetPasswordPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="animate-enter-sm">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   <span className="font-medium">{error.message}</span>
@@ -181,12 +193,12 @@ export function ResetPasswordPage() {
             <div className="space-y-2">
               <Label htmlFor="new-password">New password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                 <Input
                   id="new-password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="At least 6 characters"
-                  className="pl-9 pr-9"
+                  className="h-11 pl-9 pr-10"
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -196,15 +208,14 @@ export function ResetPasswordPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2 top-2.5 rounded p-1 text-muted-foreground hover:text-foreground"
-                  aria-label={
-                    showPassword ? 'Hide password' : 'Show password'
-                  }
+                  className="absolute right-1.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-ring"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
+                    <EyeOff className="h-4 w-4" aria-hidden="true" />
                   ) : (
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-4 w-4" aria-hidden="true" />
                   )}
                 </button>
               </div>
@@ -213,12 +224,12 @@ export function ResetPasswordPage() {
             <div className="space-y-2">
               <Label htmlFor="confirm-password">Confirm new password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                 <Input
                   id="confirm-password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Repeat your new password"
-                  className="pl-9"
+                  className="h-11 pl-9"
                   autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -230,8 +241,8 @@ export function ResetPasswordPage() {
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="h-11 w-full font-semibold" disabled={loading} aria-busy={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
               {loading ? 'Updating…' : 'Update password'}
             </Button>
 
