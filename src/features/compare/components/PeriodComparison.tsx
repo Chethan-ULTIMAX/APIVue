@@ -247,7 +247,7 @@ export function PeriodComparison({ profile, onClose }: PeriodComparisonProps) {
                   {period} days, compared against{' '}
                   {previousSnaps.length} in the preceding {period} days.
                   {previousSnaps.length === 0 && (
-                    <span className="ml-1 font-medium text-amber-600 dark:text-amber-400">
+                    <span className="ml-1 font-medium text-warning">
                       No data in the previous window — deltas cannot be
                       calculated yet.
                     </span>
@@ -293,7 +293,7 @@ export function PeriodComparison({ profile, onClose }: PeriodComparisonProps) {
                                   m.change === null
                                     ? 'text-muted-foreground'
                                     : m.change > 0
-                                      ? 'font-medium text-emerald-600 dark:text-emerald-400'
+                                      ? 'font-medium text-success'
                                       : m.change < 0
                                         ? 'font-medium text-destructive'
                                         : 'text-muted-foreground'
@@ -323,7 +323,7 @@ export function PeriodComparison({ profile, onClose }: PeriodComparisonProps) {
                       {metricRows.some(
                         (m) => m.change !== null && m.change > 0,
                       ) ? (
-                        <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <TrendingUp className="h-4 w-4 text-success" />
                       ) : (
                         <TrendingDown className="h-4 w-4 text-destructive" />
                       )}

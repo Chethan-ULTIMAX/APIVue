@@ -23,8 +23,11 @@ export function CountUp({
   format?: boolean;
   className?: string;
 }) {
-  const [display, setDisplay] = useState(0);
-  const fromRef = useRef(0);
+  const [display, setDisplay] = useState(value);
+  /* `fromRef` tracks the last *settled* value. Starting at the real `value`
+     means the first paint is correct even before the effect runs — numbers
+     must never flash 0 when real data is already on screen. */
+  const fromRef = useRef(value);
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -33,7 +36,12 @@ export function CountUp({
       return;
     }
 
-    const from = fromRef.current;
+    const from = fromRef.current === value ? value : fromRef.current;
+    /* Nothing to animate: value unchanged, or first mount already rendered. */
+    if (from === value) {
+      setDisplay(value);
+      return;
+    }
     const start = performance.now();
 
     const tick = (now: number) => {
@@ -55,6 +63,7 @@ export function CountUp({
     };
   }, [value, duration]);
 
+  /* Announce the settled value, not every intermediate frame. */
   const text = format ? Math.round(display).toLocaleString() : String(Math.round(display));
   return <span className={className}>{text}</span>;
 }

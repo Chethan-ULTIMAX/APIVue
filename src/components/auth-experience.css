@@ -40,7 +40,7 @@
 
 .auth-input-wrap { position: relative; }
 .auth-input { height: 48px; border-radius: 13px; background: hsl(var(--background) / .72); }
-.auth-input:hover:not(:disabled) { border-color: hsl(var(--primary) / .3); }
+.auth-input:hover:not(:disabled) { border-color: hsl(var(--primary) / .30); }
 .auth-input:focus { box-shadow: 0 0 0 3px hsl(var(--primary) / .10), 0 12px 30px -24px hsl(var(--primary) / .8); }
 .auth-input-icon { position: absolute; left: 13px; top: 50%; z-index: 2; width: 16px; height: 16px; transform: translateY(-50%); color: hsl(var(--muted-foreground)); pointer-events: none; transition: color 160ms ease; }
 .auth-input-wrap:focus-within .auth-input-icon { color: hsl(var(--primary)); }
@@ -88,14 +88,15 @@
 .auth-orb-one { width: 230px; height: 230px; left: -80px; top: 25%; background: radial-gradient(circle, rgba(139,92,246,.20), transparent 68%); animation: auth-float 7s ease-in-out infinite; }
 .auth-orb-two { width: 280px; height: 280px; right: -100px; bottom: 6%; background: radial-gradient(circle, rgba(34,211,238,.13), transparent 68%); animation: auth-float 9s ease-in-out -2s infinite reverse; }
 
-.auth-visual-scene { transform: translate3d(var(--auth-mx), var(--auth-my), 0); transition: transform 350ms cubic-bezier(.2,.8,.2,1); }
+.auth-visual-scene { transform: translate3d(var(--auth-mx), var(--auth-my), 0); transition: transform 400ms cubic-bezier(.16,1,.3,1); }
+@media (prefers-reduced-motion: reduce) { .auth-visual-scene { transform: none; transition: none; } }
 .auth-ring { position: absolute; left: 50%; top: 50%; border: 1px solid rgba(196,181,253,.12); border-radius: 999px; transform: translate(-50%,-50%); pointer-events: none; }
-.auth-ring-one { width: 390px; height: 390px; animation: auth-orbit 18s linear infinite; }
-.auth-ring-two { width: 300px; height: 300px; border-color: rgba(103,232,249,.14); animation: auth-orbit 13s linear infinite reverse; }
-.auth-ring-three { width: 210px; height: 210px; border-style: dashed; border-color: rgba(196,181,253,.16); animation: auth-orbit 9s linear infinite; }
+.auth-ring-one { width: 390px; height: 390px; }
+.auth-ring-two { width: 300px; height: 300px; border-color: rgba(103,232,249,.14); }
+.auth-ring-three { width: 210px; height: 210px; border-style: dashed; border-color: rgba(196,181,253,.16); }
 
 .auth-network { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; opacity: .9; }
-.auth-node { animation: auth-node-pulse 2.8s ease-in-out infinite; filter: drop-shadow(0 0 7px currentColor); }
+.auth-node { animation: auth-node-pulse 3.2s ease-in-out infinite; }
 .auth-node-delay-1 { animation-delay: .7s; }
 .auth-node-delay-2 { animation-delay: 1.35s; }
 .auth-node-delay-3 { animation-delay: 2s; }
@@ -112,27 +113,37 @@
 .auth-page-signin .auth-visual { animation-delay: 80ms; }
 .auth-page-signup .auth-visual { animation-delay: 80ms; }
 
+/* Entrance is transform + opacity only. Animating `filter: blur()` on a
+   full-height panel forces a repaint of the whole column every frame on
+   low-end GPUs, which is exactly the kind of motion to avoid. */
 @keyframes auth-visual-from-right {
-  from { opacity: 0; transform: translate3d(8%, 0, 0) scale(.97); filter: blur(12px); }
-  to { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: blur(0); }
+  from { opacity: 0; transform: translate3d(3%, 0, 0) scale(.985); }
+  to { opacity: 1; transform: translate3d(0,0,0) scale(1); }
 }
 @keyframes auth-visual-from-left {
-  from { opacity: 0; transform: translate3d(-8%, 0, 0) scale(.97); filter: blur(12px); }
-  to { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: blur(0); }
+  from { opacity: 0; transform: translate3d(-3%, 0, 0) scale(.985); }
+  to { opacity: 1; transform: translate3d(0,0,0) scale(1); }
 }
 @keyframes auth-form-from-left {
-  from { opacity: 0; transform: translate3d(-24px, 0, 0); filter: blur(7px); }
-  to { opacity: 1; transform: translate3d(0,0,0); filter: blur(0); }
+  from { opacity: 0; transform: translate3d(-14px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0,0,0); }
 }
 @keyframes auth-form-from-right {
-  from { opacity: 0; transform: translate3d(24px, 0, 0); filter: blur(7px); }
-  to { opacity: 1; transform: translate3d(0,0,0); filter: blur(0); }
+  from { opacity: 0; transform: translate3d(14px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0,0,0); }
 }
-@keyframes auth-orbit { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
-@keyframes auth-node-pulse { 0%,100% { opacity: .38; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.3); } }
-@keyframes auth-core-glow { 0%,100% { opacity: .55; transform: scale(.96); } 50% { opacity: .95; transform: scale(1.05); } }
-@keyframes auth-float { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(18px,-20px,0) scale(1.06); } }
-@keyframes auth-sheen { 0%, 70% { transform: translateX(-120%); } 88%,100% { transform: translateX(120%); } }
+/* Ambient loops: opacity-only (or transform-only) and slow enough to read as
+   "ambient state", not decoration begging for attention. */
+@keyframes auth-node-pulse { 0%,100% { opacity: .4; } 50% { opacity: 1; } }
+@keyframes auth-core-glow { 0%,100% { opacity: .55; } 50% { opacity: .9; } }
+@keyframes auth-float { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(14px,-16px,0); } }
+@keyframes auth-sheen { 0%, 72% { transform: translateX(-120%); } 88%,100% { transform: translateX(120%); } }
+
+/* The visuals are progressive enhancement: with motion or space removed the
+   panel still reads correctly because every element has a static resting state. */
+@media (prefers-reduced-motion: reduce) {
+  .auth-visual::after { display: none; }
+}
 
 html.light .auth-page {
   --auth-visual-border: rgba(15,23,42,.09);

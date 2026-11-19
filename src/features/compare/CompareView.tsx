@@ -132,7 +132,7 @@ export function CompareView() {
   if (isLoading)
     return (
       <div className="p-6">
-        <div className="mx-auto max-w-7xl animate-pulse space-y-5">
+        <div className="mx-auto max-w-7xl space-y-5" aria-busy="true">
           <div className="h-24 rounded-2xl bg-muted" />
           <div className="h-80 rounded-2xl bg-muted" />
         </div>
@@ -358,7 +358,7 @@ export function CompareView() {
                                       isUnavailable
                                         ? 'text-muted-foreground/50'
                                         : isWinner
-                                          ? 'font-bold text-emerald-600 dark:text-emerald-400'
+                                          ? 'font-bold text-success'
                                           : 'font-bold'
                                     }`}
                                   >

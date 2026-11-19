@@ -386,3 +386,111 @@ When contributing, keep the core principles in mind:
 Built with curiosity, data, and a lot of code.
 
 </div>
+
+---
+
+## 🛠 Local development
+
+### 1. Install dependencies
+
+```bash
+npm ci
+```
+
+### 2. Configure the browser environment
+
+Create `.env` (git-ignored) from the template and fill in the **publishable**
+values only:
+
+```bash
+cp .env.example .env
+```
+
+```dotenv
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+`VITE_*` variables are embedded in the browser bundle. The service-role key is
+server-only and must never appear in this file.
+
+### 3. Run the app
+
+```bash
+npm run dev          # Vite dev server on http://localhost:8080
+npm run dev:all      # Vite + the optional Express backend
+```
+
+### 4. Verify your changes
+
+```bash
+npm run typecheck    # frontend + backend
+npm run lint
+npm test             # unit + component tests
+npm run test:all     # also runs the live request-execution tests against the local mock API
+npm run build        # production build
+```
+
+`npm run test:all` starts `scripts/mock-api.mjs` on port 8788 and points the
+request-execution suite at it. No third-party API is contacted and no
+credentials are used.
+
+### 5. Database
+
+The API workspace tables are created by
+`supabase/migrations/20261119090000_api_workspace.sql`:
+
+```bash
+supabase db push
+```
+
+The migration is additive only — it creates empty `api_collections`,
+`api_saved_requests` and `api_environments` tables with owner-scoped RLS and
+does not touch any existing table, row or policy.
+
+---
+
+## 🧪 API request workspace
+
+`/dashboard/requests` is the HTTP client area of APIVue.
+
+| Capability | Notes |
+| --- | --- |
+| Methods | GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS |
+| Query params | Key/value rows with enable toggles; merged with any `?` already in the URL |
+| Headers | Custom headers, with a note about browser-controlled headers |
+| Bodies | JSON (with validation + format), raw text, form URL-encoded |
+| Auth | Bearer, Basic, API key (header or query) |
+| Environments | Named `{{variable}}` sets, per user, secrets maskable |
+| Response | Status, timing, size, headers, pretty JSON, raw text, empty-body handling |
+| Collections | Saved requests grouped into folders |
+| History | Last 40 requests, browser-only, credentials stripped |
+| Export | Copy as cURL (secrets masked), copy response body |
+
+### Security model
+
+* Requests are sent **from your browser**. APIVue has no server-side proxy, so
+  it cannot be used to reach internal network resources.
+* Browser CORS rules therefore apply. A server that works in cURL but sends no
+  `Access-Control-Allow-Origin` will fail here; the UI says so explicitly.
+* Requests are only sent on user action, with no automatic retry of
+  state-changing methods.
+* History never stores `Authorization`, `Cookie` or token-like headers, and
+  strips credentials embedded in URLs.
+* Saved requests, collections and environments are protected by row-level
+  security scoped to `auth.uid()`.
+
+### Authentication configuration required in Supabase
+
+For email confirmation, password recovery and OAuth redirects to work, the
+Supabase project must allow the app's origins:
+
+| Setting | Value |
+| --- | --- |
+| Site URL | `https://chethan-ultimax.github.io/APIVue` |
+| Redirect URLs | `https://chethan-ultimax.github.io/APIVue**`, `http://localhost:8080**` |
+
+Email/password sign-in works with the default mailer, but it is rate-limited
+(few messages per hour). Configure custom SMTP in the Supabase dashboard before
+inviting real users. Google sign-in only appears once the Google provider is
+enabled on the project.

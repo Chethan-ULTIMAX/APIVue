@@ -12,8 +12,18 @@ import { calculateAllGoalsProgress, generateGoalActions, getGoalsSummary, sugges
 import { getGoalTrackerOptions, getGoalTracking, inferLegacyTracking, resolveGoalValue, trackingId, type GoalTracking } from '@/lib/analytics/goal-tracking';
 import type { Goal } from '@/hooks/use-goals';
 
+/**
+ * Stable empty array.
+ *
+ * `data ?? []` creates a new array on every render, which silently defeats
+ * every `useMemo`/`useEffect` that lists it as a dependency. A shared frozen
+ * constant keeps referential equality (and the warnings) honest.
+ */
+const EMPTY_ROWS: never[] = [];
+
+
 const STATUS_STYLES = {
-  completed: 'border-emerald-500/30 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-300',
+  completed: 'border-emerald-500/30 bg-emerald-500/[0.06] text-success',
   'on-track': 'border-primary/20 bg-primary/[0.04] text-primary',
   behind: 'border-orange-500/30 bg-orange-500/[0.06] text-orange-700 dark:text-orange-300',
   paused: 'border-muted-foreground/20 bg-muted/50 text-muted-foreground',
@@ -32,9 +42,9 @@ export function GoalsView() {
   const updateGoal = useUpdateGoal();
   const deleteGoal = useDeleteGoal();
 
-  const goals = goalsQuery.data ?? [];
-  const profiles = profilesQuery.data ?? [];
-  const snapshots = snapshotsQuery.data ?? [];
+  const goals = goalsQuery.data ?? EMPTY_ROWS;
+  const profiles = profilesQuery.data ?? EMPTY_ROWS;
+  const snapshots = snapshotsQuery.data ?? EMPTY_ROWS;
   const trackerOptions = useMemo(() => getGoalTrackerOptions(profiles), [profiles]);
   const [title, setTitle] = useState('');
   const [target, setTarget] = useState('');
@@ -139,7 +149,7 @@ export function GoalsView() {
 
       {actions.length > 0 && <section className="grid gap-3 md:grid-cols-2">{actions.slice(0,4).map((action)=><div key={action.id} className="rounded-xl border border-border bg-card p-4"><div className="flex items-start gap-3"><div className="rounded-lg bg-muted p-2"><Sparkles className="h-4 w-4" /></div><div><p className="text-sm font-medium">{action.title}</p><p className="mt-1 text-xs text-muted-foreground">{action.description}</p></div></div></div>)}</section>}
 
-      {isLoading ? <div className="grid gap-4 md:grid-cols-2">{[1,2,3,4].map((n)=><Card key={n} className="animate-pulse"><CardContent className="space-y-4 p-6"><div className="h-5 w-1/2 rounded bg-muted"/><div className="h-2 rounded bg-muted"/><div className="h-4 w-1/3 rounded bg-muted"/></CardContent></Card>)}</div> : filtered.length === 0 ? <Card className="border-dashed"><CardContent className="flex flex-col items-center justify-center p-12 text-center"><Target className="h-10 w-10 text-muted-foreground/30"/><p className="mt-4 font-medium">{goals.length ? 'No goals in this filter' : 'No goals yet'}</p><p className="mt-1 max-w-md text-sm text-muted-foreground">{goals.length ? 'Try another status filter.' : 'Create your first tracked goal and APIVue will keep its progress tied to real developer data.'}</p></CardContent></Card> : <div className="grid gap-4 lg:grid-cols-2">{filtered.map((progress)=><GoalCard key={progress.goal.id} progress={progress} trackerOptions={trackerOptions} editing={editingId===progress.goal.id} onEdit={()=>setEditingId(progress.goal.id)} onCancelEdit={()=>setEditingId(null)} onSaveEdit={(form)=>saveEdit(progress.goal,form)} onStatus={(status)=>setStatus(progress.goal,status)} onDelete={()=>remove(progress.goal)} />)}</div>}
+      {isLoading ? <div className="grid gap-4 md:grid-cols-2">{[1,2,3,4].map((n)=><Card key={n}><CardContent className="space-y-4 p-6"><div className="skeleton h-5 w-1/2 rounded"/><div className="skeleton h-2 rounded"/><div className="skeleton h-4 w-1/3 rounded"/></CardContent></Card>)}</div> : filtered.length === 0 ? <Card className="border-dashed"><CardContent className="flex flex-col items-center justify-center p-12 text-center"><Target className="h-10 w-10 text-muted-foreground/30"/><p className="mt-4 font-medium">{goals.length ? 'No goals in this filter' : 'No goals yet'}</p><p className="mt-1 max-w-md text-sm text-muted-foreground">{goals.length ? 'Try another status filter.' : 'Create your first tracked goal and APIVue will keep its progress tied to real developer data.'}</p></CardContent></Card> : <div className="grid gap-4 lg:grid-cols-2">{filtered.map((progress)=><GoalCard key={progress.goal.id} progress={progress} trackerOptions={trackerOptions} editing={editingId===progress.goal.id} onEdit={()=>setEditingId(progress.goal.id)} onCancelEdit={()=>setEditingId(null)} onSaveEdit={(form)=>saveEdit(progress.goal,form)} onStatus={(status)=>setStatus(progress.goal,status)} onDelete={()=>remove(progress.goal)} />)}</div>}
 
       <p className="text-center text-[11px] text-muted-foreground">Progress is calculated locally from stored APIVue profile data. No synthetic activity or invented metrics are used.</p>
     </div>

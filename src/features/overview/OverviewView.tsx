@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Shield,
   Sparkles,
+  Send,
   Target,
 } from 'lucide-react';
 
@@ -53,7 +54,7 @@ const groups = [
 const toneClasses: Record<string, string> = {
   blue: 'border-blue-500/25 bg-blue-500/[0.06] text-blue-600 dark:text-blue-400',
   orange: 'border-orange-500/25 bg-orange-500/[0.06] text-orange-600 dark:text-orange-400',
-  emerald: 'border-emerald-500/25 bg-emerald-500/[0.06] text-emerald-600 dark:text-emerald-400',
+  emerald: 'border-emerald-500/25 bg-emerald-500/[0.06] text-success',
   violet: 'border-violet-500/25 bg-violet-500/[0.06] text-violet-600 dark:text-violet-400',
   cyan: 'border-cyan-500/25 bg-cyan-500/[0.06] text-cyan-600 dark:text-cyan-400',
 };
@@ -109,8 +110,9 @@ function DeveloperIdentityHeader({
   const location = primary?.data?.location;
 
   return (
-    <Card className="overflow-hidden border-border bg-card/80">
-      <CardContent className="p-5 sm:p-6">
+    <Card className="relative overflow-hidden border-border/80 bg-card">
+      <div className="grid-texture pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden="true" />
+      <CardContent className="relative p-5 sm:p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
           {/* Avatar */}
           <div className="flex shrink-0 flex-col items-center gap-2">
@@ -167,7 +169,7 @@ function DeveloperIdentityHeader({
                     />
                     {integration.name}
                     {isVerified ? (
-                      <Shield className="h-3 w-3 text-emerald-500" />
+                      <Shield className="h-3 w-3 text-success" />
                     ) : (
                       <span className="text-[9px] text-muted-foreground">
                         public
@@ -192,7 +194,7 @@ function DeveloperIdentityHeader({
                 </span>
               )}
               {verifiedCount > 0 && (
-                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                <span className="flex items-center gap-1 text-success">
                   <Shield className="h-3 w-3" />
                   {verifiedCount} verified
                 </span>
@@ -214,6 +216,13 @@ function DeveloperIdentityHeader({
 
           {/* Quick actions */}
           <div className="flex shrink-0 gap-2">
+            <Link to="/dashboard/requests">
+              <Button size="sm" className="gap-2">
+                <Send className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">New request</span>
+                <span className="sm:hidden">Request</span>
+              </Button>
+            </Link>
             <Link to="/dashboard/integrations">
               <Button size="sm" variant="outline" className="gap-2">
                 <Plus className="h-3.5 w-3.5" />
@@ -243,13 +252,13 @@ function KeyMetricCard({
   tone: string;
 }) {
   return (
-    <Card className="overflow-hidden bg-card/80 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+    <Card className="surface-lift overflow-hidden bg-card">
       <CardContent className="p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <div
             className={`flex h-9 w-9 items-center justify-center rounded-xl border ${tone}`}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
         <p className="mt-3 text-2xl font-black tabular-nums sm:text-3xl">
@@ -285,7 +294,7 @@ function PlatformOverviewRow({
 
   return (
     <Link to={`/dashboard/profile/${profile.id}`}>
-      <Card className="group h-full overflow-hidden bg-card/60 transition hover:-translate-y-0.5 hover:shadow-md">
+      <Card className="surface-lift group h-full overflow-hidden bg-card">
         <CardContent className="p-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -307,7 +316,7 @@ function PlatformOverviewRow({
               variant="outline"
               className={
                 isVerified
-                  ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                  ? 'border-emerald-500/30 text-success'
                   : 'text-muted-foreground'
               }
             >
@@ -347,8 +356,8 @@ function PlatformOverviewRow({
               <span
                 className={
                   delta.delta >= 0
-                    ? 'text-emerald-500'
-                    : 'text-rose-500'
+                    ? 'text-success'
+                    : 'text-destructive'
                 }
               >
                 {delta.delta >= 0 ? '+' : ''}
@@ -430,7 +439,7 @@ function CategoryCard({
 
   return (
     <Link to={`/dashboard/integrations?category=${group.query}`} className="group block h-full">
-      <Card className="h-full overflow-hidden bg-card/80 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl">
+      <Card className="surface-lift h-full overflow-hidden bg-card">
         <CardContent className="p-5 sm:p-6">
           <div className="flex items-start justify-between gap-3">
             <div className={`flex h-11 w-11 items-center justify-center rounded-xl border ${toneClasses[group.tone]}`}>
@@ -440,7 +449,7 @@ function CategoryCard({
               variant="outline"
               className={
                 sourceProfiles.length
-                  ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                  ? 'border-emerald-500/30 text-success'
                   : ''
               }
             >
@@ -507,7 +516,7 @@ function ProfileStatCard({
 
   return (
     <Link to={`/dashboard/profile/${profile.id}`}>
-      <Card className="group h-full overflow-hidden bg-card/80 transition hover:-translate-y-1 hover:shadow-lg">
+      <Card className="surface-lift group h-full overflow-hidden bg-card">
         <CardContent className="p-5">
           <div className="flex items-center justify-between gap-2">
             <div
@@ -550,7 +559,7 @@ function ProfileStatCard({
               <div className="text-right">
                 <p
                   className={`text-sm font-bold tabular-nums ${
-                    delta.delta >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                    delta.delta >= 0 ? 'text-success' : 'text-destructive'
                   }`}
                 >
                   {delta.delta >= 0 ? '+' : ''}
@@ -625,17 +634,19 @@ export function OverviewView() {
 
   if (isLoading)
     return (
-      <div className="p-6">
-        <div className="mx-auto max-w-7xl animate-pulse space-y-6">
-          <div className="h-32 rounded-3xl bg-muted" />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="p-5 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl space-y-6" aria-busy="true" aria-live="polite">
+          <span className="sr-only">Loading your dashboard</span>
+          {/* Geometry mirrors the real layout so nothing shifts when data lands. */}
+          <div className="skeleton h-28 rounded-xl" />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-28 rounded-3xl bg-muted" />
+              <div key={i} className="skeleton h-[104px] rounded-xl" />
             ))}
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-64 rounded-3xl bg-muted" />
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="skeleton h-40 rounded-xl" />
             ))}
           </div>
         </div>
@@ -645,16 +656,20 @@ export function OverviewView() {
   return (
     <div className="relative min-h-full overflow-hidden">
       <div className="pointer-events-none absolute -left-40 top-0 h-96 w-96 rounded-full bg-primary/[0.06] blur-3xl" />
-      <div className="relative mx-auto max-w-7xl space-y-7 p-5 sm:p-6 lg:p-8">
+      <div className="stagger relative mx-auto max-w-7xl space-y-7 p-5 sm:p-6 lg:p-8">
         {/* Developer identity header */}
-        <DeveloperIdentityHeader profiles={profiles} user={user} />
+        <div className="stagger-item">
+          <DeveloperIdentityHeader profiles={profiles} user={user} />
+        </div>
 
         {/* APIVue signature visual */}
-        <APIVueSignature activePlatforms={activePlatforms} />
+        <div className="stagger-item">
+          <APIVueSignature activePlatforms={activePlatforms} />
+        </div>
 
         {/* Key metrics */}
         {profiles.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="stagger-item grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <KeyMetricCard
               label="Total activity"
               value={total}
@@ -683,11 +698,11 @@ export function OverviewView() {
         )}
 
         {/* Real data banner */}
-        <Card className="border-emerald-500/20 bg-emerald-500/[0.03]">
+        <Card className="stagger-item border-emerald-500/20 bg-emerald-500/[0.03]">
           <CardContent className="p-5 sm:p-6">
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
                 <div>
                   <p className="font-semibold">Real connected data</p>
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -719,9 +734,9 @@ export function OverviewView() {
         </Card>
 
         {/* Category areas */}
-        <section>
+        <section className="stagger-item">
           <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="eyebrow">
               Your areas
             </p>
             <h2 className="mt-1 text-xl font-bold">
@@ -738,10 +753,10 @@ export function OverviewView() {
         {profiles.length > 0 && (
           <>
             {/* Platform contribution overview */}
-            <section>
+            <section className="stagger-item">
               <div className="mb-4 flex items-end justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <p className="eyebrow">
                     Platform contribution overview
                   </p>
                   <h2 className="mt-1 text-xl font-bold">
@@ -768,17 +783,19 @@ export function OverviewView() {
             </section>
 
             {/* Activity chart */}
+            <div className="stagger-item">
             <TimeRangeChart
               points={activity}
               title="Overall activity"
               subtitle="All connected sources normalized by day. The same 7-day, 30-day, 1-year and all-time controls are used everywhere."
             />
+            </div>
 
             {/* Recent activity */}
             {recent.length > 0 && (
-              <section>
+              <section className="stagger-item">
                 <div className="mb-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <p className="eyebrow">
                     Recent activity
                   </p>
                   <h2 className="mt-1 text-xl font-bold">
@@ -794,10 +811,10 @@ export function OverviewView() {
             )}
 
             {/* Profile stat cards */}
-            <section>
+            <section className="stagger-item">
               <div className="mb-4 flex items-end justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <p className="eyebrow">
                     Connected sources
                   </p>
                   <h2 className="mt-1 text-xl font-bold">Platform snapshots</h2>
@@ -824,9 +841,11 @@ export function OverviewView() {
         )}
 
         {!profiles.length && (
-          <Card className="border-dashed">
-            <CardContent className="p-12 text-center">
-              <Database className="mx-auto h-10 w-10 text-muted-foreground/40" />
+          <Card className="stagger-item border-dashed bg-surface-1/40">
+            <CardContent className="p-10 text-center sm:p-12">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-surface-2">
+                <Database className="h-5 w-5 text-muted-foreground" />
+              </div>
               <h2 className="mt-3 text-lg font-bold">
                 Your dashboard is waiting for its first source
               </h2>

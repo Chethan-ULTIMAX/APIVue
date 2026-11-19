@@ -4,10 +4,10 @@ import { Card, CardContent } from '@/components/ui/card';
 
 const items = [
   { href: '/dashboard/profiles', label: 'Profiles', icon: Users, color: 'text-violet-500' },
-  { href: '/dashboard/progress', label: 'Progress', icon: TrendingUp, color: 'text-emerald-500' },
+  { href: '/dashboard/progress', label: 'Progress', icon: TrendingUp, color: 'text-success' },
   { href: '/dashboard/compare', label: 'Compare', icon: GitCompareArrows, color: 'text-cyan-500' },
   { href: '/dashboard/analytics', label: 'Analytics', icon: Activity, color: 'text-orange-500' },
-  { href: '/dashboard/goals', label: 'Goals', icon: Target, color: 'text-rose-500' },
+  { href: '/dashboard/goals', label: 'Goals', icon: Target, color: 'text-destructive' },
   { href: '/dashboard/ai-insights', label: 'AI Insights', icon: Brain, color: 'text-indigo-500' },
 ];
 

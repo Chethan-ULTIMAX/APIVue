@@ -17,7 +17,7 @@ export function PublicProfileCard({ data }: PublicProfileCardProps) {
   const highlights = metrics.slice(0, 3);
 
   return (
-    <section className="animate-in fade-in zoom-in-[0.985] relative overflow-hidden rounded-3xl border border-border bg-card/50 shadow-sm backdrop-blur-xl duration-500">
+    <section className="animate-enter-up relative overflow-hidden rounded-2xl border border-border bg-card/50 shadow-sm backdrop-blur-sm duration-500">
       <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent" />
       <div className="relative p-5 sm:p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
