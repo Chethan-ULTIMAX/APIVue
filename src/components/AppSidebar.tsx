@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Brain, Compass, GitCompareArrows, LayoutDashboard, LogOut, Plug, Settings, Target, TrendingUp, Users, X, Radio } from 'lucide-react';
+import { BarChart3, Brain, Compass, GitCompareArrows, LayoutDashboard, LogOut, Plug, Settings, Send, Target, TrendingUp, Users, X, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface NavItem { icon: React.ElementType; label: string; href: string; matchPrefix?: boolean; }
 interface NavSection { title: string; items: NavItem[]; }
 const NAV_SECTIONS: NavSection[] = [
+  { title: 'Workspace', items: [{ icon: Send, label: 'Requests', href: '/dashboard/requests' }] },
   { title: 'Overview', items: [{ icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' }, { icon: TrendingUp, label: 'Progress', href: '/dashboard/progress' }] },
   { title: 'Analyze', items: [{ icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics' }, { icon: GitCompareArrows, label: 'Compare', href: '/dashboard/compare' }, { icon: Brain, label: 'AI Insights', href: '/dashboard/ai-insights' }] },
   { title: 'Sources', items: [{ icon: Users, label: 'Profiles', href: '/dashboard/profiles', matchPrefix: true }, { icon: Compass, label: 'Explore', href: '/dashboard/explore' }, { icon: Plug, label: 'Integrations', href: '/dashboard/integrations' }] },

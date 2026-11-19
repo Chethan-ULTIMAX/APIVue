@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Shield,
   Sparkles,
+  Send,
   Target,
 } from 'lucide-react';
 
@@ -214,6 +215,13 @@ function DeveloperIdentityHeader({
 
           {/* Quick actions */}
           <div className="flex shrink-0 gap-2">
+            <Link to="/dashboard/requests">
+              <Button size="sm" className="gap-2">
+                <Send className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">New request</span>
+                <span className="sm:hidden">Request</span>
+              </Button>
+            </Link>
             <Link to="/dashboard/integrations">
               <Button size="sm" variant="outline" className="gap-2">
                 <Plus className="h-3.5 w-3.5" />

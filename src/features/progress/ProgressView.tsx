@@ -42,6 +42,16 @@ import {
   chartTooltipStyle,
 } from '@/components/apivue/ProfileBits';
 
+/**
+ * Stable empty array.
+ *
+ * `data ?? []` creates a new array on every render, which silently defeats
+ * every `useMemo`/`useEffect` that lists it as a dependency. A shared frozen
+ * constant keeps referential equality (and the warnings) honest.
+ */
+const EMPTY_ROWS: never[] = [];
+
+
 type RangeKey = '7d' | '30d' | '90d' | 'all';
 
 const RANGES: { key: RangeKey; label: string; days: number }[] = [
@@ -66,8 +76,8 @@ export function ProgressView() {
   const [addOpen, setAddOpen] = useState(false);
   const [range, setRange] = useState<RangeKey>('30d');
 
-  const profiles = profilesQuery.data ?? [];
-  const snapshots = snapshotsQuery.data ?? [];
+  const profiles = profilesQuery.data ?? EMPTY_ROWS;
+  const snapshots = snapshotsQuery.data ?? EMPTY_ROWS;
   const isLoading = profilesQuery.isLoading || snapshotsQuery.isLoading;
   const error = (profilesQuery.error ?? snapshotsQuery.error) as Error | null;
 

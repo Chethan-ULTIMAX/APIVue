@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, Loader2, Mail } from 'lucide-react';
 
 import { useAuth } from '@/lib/auth-context';
+import { friendlyAuthError } from '@/lib/auth-errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ReturnType<typeof friendlyAuthError> | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const { resetPassword } = useAuth();
@@ -25,7 +26,7 @@ export function ForgotPasswordPage() {
       await resetPassword(email);
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send reset email. Please try again.');
+      setError(friendlyAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -37,11 +38,21 @@ export function ForgotPasswordPage() {
         <CardHeader className="space-y-1 text-center">
           <div className="mb-2 flex justify-center"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10"><img src={logoSrc} alt="" className="h-9 w-9 object-contain" /></div></div>
           <CardTitle className="text-2xl">Reset your password</CardTitle>
-          <CardDescription>We&apos;ll email you a link to reset it.</CardDescription>
+          <CardDescription>
+            Enter the email you signed up with and we&apos;ll send a reset link.
+          </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <span className="font-medium">{error.message}</span>
+                  {error.hint ? <span className="mt-1 block text-xs opacity-90">{error.hint}</span> : null}
+                </AlertDescription>
+              </Alert>
+            )}
             {success && <Alert><CheckCircle2 className="h-4 w-4" /><AlertDescription>Check your inbox for the reset link.</AlertDescription></Alert>}
             <div className="space-y-2"><Label htmlFor="email">Email</Label><div className="relative"><Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input id="email" type="email" placeholder="name@example.com" className="pl-9" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={loading || success} /></div></div>
           </CardContent>

@@ -14,7 +14,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '@/integrations/supabase/client';
 
 export interface AuthUser {
   id: string;
@@ -31,8 +31,15 @@ interface AuthContextType {
   signUp: (email: string, password: string, name?: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  signInWithGoogle: (redirectPath?: string) => Promise<boolean>;
+  /**
+   * Provider availability. Google OAuth must be enabled in the Supabase
+   * project before the sign-in button can work, so the UI reads this instead
+   * of offering a button that always fails.
+   */
+  providers: { google: boolean };
   refreshSession: () => Promise<void>;
+  /** Re-send the signup confirmation email. */
+  resendConfirmation: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -73,6 +80,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  /*
+   * Supabase exposes the enabled external providers through the public auth
+   * settings endpoint. Reading it once lets the login screen hide a Google
+   * button that could only ever fail because the provider is not configured.
+   */
+  const [providers, setProviders] = useState<{ google: boolean }>({ google: false });
+  useEffect(() => {
+    let active = true;
+    void fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+      headers: { apikey: SUPABASE_PUBLISHABLE_KEY },
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((settings: { external?: Record<string, boolean> } | null) => {
+        if (!active || !settings?.external) return;
+        setProviders({ google: settings.external.google === true });
+      })
+      .catch(() => {
+        // A failed lookup must never block email/password sign-in.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const refreshSession = async () => {
     setError(null);
@@ -167,16 +198,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (resetError) throw resetError;
   };
 
-  const signInWithGoogle = async (redirectPath?: string): Promise<boolean> => {
-    const target = safeRedirectPath(redirectPath);
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: appUrl(target),
-      },
+  const resendConfirmation = async (email: string) => {
+    const { error: resendError } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: appUrl('/login') },
     });
-    if (oauthError) throw oauthError;
-    return false;
+    if (resendError) throw resendError;
   };
 
   return (
@@ -189,8 +217,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signOut,
         resetPassword,
-        signInWithGoogle,
+        providers,
         refreshSession,
+        resendConfirmation,
       }}
     >
       {children}

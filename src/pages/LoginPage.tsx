@@ -1,6 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { AlertCircle, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  Mail,
+} from 'lucide-react';
 
 import { AuthExperience } from '@/components/AuthExperience';
 import { Button } from '@/components/ui/button';
@@ -9,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/lib/auth-context';
+import { friendlyAuthError, isEmailNotConfirmed } from '@/lib/auth-errors';
 
 function GoogleIcon({ className = 'h-4 w-4' }: { className?: string }) {
   return (
@@ -25,80 +34,201 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ReturnType<typeof friendlyAuthError> | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const { signIn, signInWithGoogle } = useAuth();
+  const [resending, setResending] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+
+  const { signIn, resendConfirmation, providers } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const nextParam = searchParams.get('next');
   const redirectTo = nextParam && /^\/(?!\/)/.test(nextParam) ? nextParam : '/dashboard';
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  /* Arriving from signup: explain the confirmation step once. */
+  useEffect(() => {
+    if (searchParams.get('signup') === 'confirm') {
+      setNotice(
+        'Account created. We emailed you a confirmation link — open it, then sign in here.',
+      );
+    }
+  }, [searchParams]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError(null);
     setLoading(true);
     try {
       await signIn(email, password);
       navigate(redirectTo, { replace: true });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid email or password.');
+    } catch (signInError) {
+      setError(friendlyAuthError(signInError));
+      setNeedsConfirmation(isEmailNotConfirmed(signInError));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleResend = async () => {
+    if (!email) {
+      setError({ message: 'Enter your email address first so we know where to send the link.' });
+      return;
+    }
+    setResending(true);
     setError(null);
-    setGoogleLoading(true);
     try {
-      await signInWithGoogle(redirectTo);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed. Please try again.');
-      setGoogleLoading(false);
+      await resendConfirmation(email);
+      setNotice('Confirmation email sent. Check your inbox (and spam folder).');
+      setNeedsConfirmation(false);
+    } catch (resendError) {
+      setError(friendlyAuthError(resendError));
+    } finally {
+      setResending(false);
     }
   };
-
-  const busy = loading || googleLoading;
 
   return (
     <AuthExperience
       mode="signin"
       title="Welcome back"
       description="Sign in to pick up your developer progress, connected profiles, goals, and insights right where you left them."
-      footer={<>Don&apos;t have an account? <Link to={nextParam ? `/signup?next=${encodeURIComponent(nextParam)}` : '/signup'} className="font-semibold text-primary transition hover:text-primary/80">Create one</Link></>}
+      footer={
+        <>
+          Don&apos;t have an account?{' '}
+          <Link
+            to={nextParam ? `/signup?next=${encodeURIComponent(nextParam)}` : '/signup'}
+            className="font-semibold text-primary transition hover:text-primary/80"
+          >
+            Create one
+          </Link>
+        </>
+      }
     >
       <div className="space-y-5">
-        {error && <Alert variant="destructive" className="animate-card-reveal"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
+        {notice ? (
+          <Alert className="animate-card-reveal border-emerald-500/25 bg-emerald-500/5">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <AlertDescription className="text-emerald-800 dark:text-emerald-200">
+              {notice}
+            </AlertDescription>
+          </Alert>
+        ) : null}
 
-        <Button type="button" variant="outline" className="auth-google-button group h-12 w-full gap-3 rounded-xl bg-background/70" onClick={handleGoogleSignIn} disabled={busy}>
-          {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
-          <span>Continue with Google</span>
-          {!googleLoading && <span className="ml-auto text-muted-foreground transition-transform group-hover:translate-x-0.5">→</span>}
-        </Button>
+        {error ? (
+          <Alert variant="destructive" className="animate-card-reveal">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <span className="font-medium">{error.message}</span>
+              {error.hint ? (
+                <span className="mt-1 block text-xs opacity-90">{error.hint}</span>
+              ) : null}
+              {needsConfirmation ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 h-7 rounded-md text-xs"
+                  onClick={() => void handleResend()}
+                  disabled={resending}
+                >
+                  {resending ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : null}
+                  Resend confirmation email
+                </Button>
+              ) : null}
+            </AlertDescription>
+          </Alert>
+        ) : null}
 
-        <div className="relative py-1"><div className="absolute inset-0 flex items-center"><Separator /></div><div className="relative flex justify-center text-[10px] font-semibold uppercase tracking-[0.18em]"><span className="bg-card px-3 text-muted-foreground">Or continue with email</span></div></div>
+        {/* Only offered when the provider is actually enabled in Supabase. */}
+        {providers.google ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="auth-google-button group h-12 w-full gap-3 rounded-xl bg-background/70"
+            onClick={() =>
+              void import('@/lib/auth-oauth').then(({ signInWithGoogleRedirect }) =>
+                signInWithGoogleRedirect(redirectTo),
+              )
+            }
+            disabled={loading}
+          >
+            <GoogleIcon />
+            <span>Continue with Google</span>
+          </Button>
+        ) : null}
+
+        {providers.google ? (
+          <div className="relative py-1">
+            <div className="absolute inset-0 flex items-center">
+              <Separator />
+            </div>
+            <div className="relative flex justify-center text-[10px] font-semibold uppercase tracking-[0.18em]">
+              <span className="bg-card px-3 text-muted-foreground">Or sign in with email</span>
+            </div>
+          </div>
+        ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <div className="auth-input-wrap">
               <Mail className="auth-input-icon" />
-              <Input id="email" type="email" placeholder="name@example.com" className="auth-input pl-10" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={busy} />
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
+                className="auth-input pl-10"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                disabled={loading}
+              />
             </div>
           </div>
+
           <div className="space-y-2">
-            <div className="flex items-center justify-between"><Label htmlFor="password">Password</Label><Link to="/forgot-password" className="text-xs font-medium text-muted-foreground transition hover:text-primary">Forgot password?</Link></div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Link
+                to="/forgot-password"
+                className="text-xs font-medium text-muted-foreground transition hover:text-primary"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <div className="auth-input-wrap">
               <Lock className="auth-input-icon" />
-              <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="auth-input pl-10 pr-11" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={busy} />
-              <button type="button" onClick={() => setShowPassword((v) => !v)} className="auth-password-toggle focus-ring" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Enter your password"
+                className="auth-input pl-10 pr-11"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="auth-password-toggle focus-ring"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
           </div>
-          <Button type="submit" className="auth-submit-button h-12 w-full rounded-xl text-sm font-semibold shadow-lg shadow-primary/20" disabled={busy}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+
+          <Button
+            type="submit"
+            className="auth-submit-button h-12 w-full rounded-xl text-sm font-semibold shadow-lg shadow-primary/20"
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {loading ? 'Signing in…' : 'Sign in'}
-            {!loading && <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-xs">↵</span>}
           </Button>
         </form>
       </div>

@@ -57,6 +57,24 @@ export interface Database {
         Update: Update<{ id: string; user_id: string; title: string; description: string | null; category: string | null; target_value: number | null; current_value: number; unit: string | null; start_date: string | null; target_date: string | null; status: 'active' | 'completed' | 'paused' | 'cancelled'; metadata: Json; created_at: string; updated_at: string; }>;
         Relationships: [];
       };
+      api_collections: {
+        Row: Row<{ id: string; user_id: string; name: string; description: string | null; created_at: string; updated_at: string; }>;
+        Insert: Insert<{ id: string; user_id: string; name: string; description: string | null; created_at: string; updated_at: string; }>;
+        Update: Update<{ id: string; user_id: string; name: string; description: string | null; created_at: string; updated_at: string; }>;
+        Relationships: [];
+      };
+      api_saved_requests: {
+        Row: Row<{ id: string; user_id: string; collection_id: string | null; name: string; method: string; url: string; params: Json; headers: Json; body_mode: string; body: string | null; auth: Json; created_at: string; updated_at: string; }>;
+        Insert: Insert<{ id: string; user_id: string; collection_id: string | null; name: string; method: string; url: string; params: Json; headers: Json; body_mode: string; body: string | null; auth: Json; created_at: string; updated_at: string; }>;
+        Update: Update<{ id: string; user_id: string; collection_id: string | null; name: string; method: string; url: string; params: Json; headers: Json; body_mode: string; body: string | null; auth: Json; created_at: string; updated_at: string; }>;
+        Relationships: [];
+      };
+      api_environments: {
+        Row: Row<{ id: string; user_id: string; name: string; variables: Json; is_active: boolean; created_at: string; updated_at: string; }>;
+        Insert: Insert<{ id: string; user_id: string; name: string; variables: Json; is_active: boolean; created_at: string; updated_at: string; }>;
+        Update: Update<{ id: string; user_id: string; name: string; variables: Json; is_active: boolean; created_at: string; updated_at: string; }>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

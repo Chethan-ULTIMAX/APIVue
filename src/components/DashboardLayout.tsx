@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 
 const pageNames: Record<string, string> = {
   '/dashboard': 'Dashboard',
+  '/dashboard/requests': 'Requests',
   '/dashboard/profiles': 'Profiles',
   '/dashboard/progress': 'Progress',
   '/dashboard/explore': 'Explore',

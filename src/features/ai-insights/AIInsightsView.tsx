@@ -27,6 +27,16 @@ import {
   type InsightSeverity,
 } from '@/lib/analytics/ai-insights';
 
+/**
+ * Stable empty array.
+ *
+ * `data ?? []` creates a new array on every render, which silently defeats
+ * every `useMemo`/`useEffect` that lists it as a dependency. A shared frozen
+ * constant keeps referential equality (and the warnings) honest.
+ */
+const EMPTY_ROWS: never[] = [];
+
+
 /* ============================================================
  * Severity styling
  *
@@ -484,9 +494,9 @@ export function AIInsightsView() {
 
   const [activeFilter, setActiveFilter] = useState<FilterId>('all');
 
-  const profiles = profilesQuery.data ?? [];
-  const snapshots = snapshotsQuery.data ?? [];
-  const goals = goalsQuery.data ?? [];
+  const profiles = profilesQuery.data ?? EMPTY_ROWS;
+  const snapshots = snapshotsQuery.data ?? EMPTY_ROWS;
+  const goals = goalsQuery.data ?? EMPTY_ROWS;
   const isLoading = profilesQuery.isLoading || snapshotsQuery.isLoading || goalsQuery.isLoading;
   const error = (profilesQuery.error ?? snapshotsQuery.error ?? goalsQuery.error) as Error | null;
 

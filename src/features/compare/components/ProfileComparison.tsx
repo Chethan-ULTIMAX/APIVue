@@ -24,6 +24,16 @@ import {
 import type { TrackedProfile } from '@/lib/integrations/registry';
 import { formatMetric, getIntegration } from '@/lib/integrations/registry';
 
+/**
+ * Stable empty array.
+ *
+ * `data ?? []` creates a new array on every render, which silently defeats
+ * every `useMemo`/`useEffect` that lists it as a dependency. A shared frozen
+ * constant keeps referential equality (and the warnings) honest.
+ */
+const EMPTY_ROWS: never[] = [];
+
+
 const SERIES_COLORS = [
   'hsl(var(--primary))',
   'hsl(199 89% 48%)',
@@ -39,9 +49,9 @@ interface ProfileComparisonProps {
 
 export function ProfileComparison({ profile, onClose }: ProfileComparisonProps) {
   const integration = getIntegration(profile.platform);
-  const metrics = profile.data?.metrics ?? [];
-  const activity = profile.data?.activity ?? [];
-  const ratingHistory = profile.data?.ratingHistory ?? [];
+  const metrics = profile.data?.metrics ?? EMPTY_ROWS;
+  const activity = profile.data?.activity ?? EMPTY_ROWS;
+  const ratingHistory = profile.data?.ratingHistory ?? EMPTY_ROWS;
 
   /* ---------- Activity summary ---------- */
 

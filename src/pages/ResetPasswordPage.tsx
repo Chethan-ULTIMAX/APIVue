@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 import { supabase } from '@/integrations/supabase/client';
+import { friendlyAuthError } from '@/lib/auth-errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,7 +41,7 @@ export function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; hint?: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -90,11 +91,11 @@ export function ResetPasswordPage() {
     setError(null);
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      setError({ message: 'Password must be at least 6 characters.' });
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError({ message: 'The two passwords do not match.' });
       return;
     }
 
@@ -109,9 +110,7 @@ export function ResetPasswordPage() {
       });
       navigate('/login', { replace: true });
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to update password.',
-      );
+      setError(friendlyAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -172,7 +171,10 @@ export function ResetPasswordPage() {
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  <span className="font-medium">{error.message}</span>
+                  {error.hint ? <span className="mt-1 block text-xs opacity-90">{error.hint}</span> : null}
+                </AlertDescription>
               </Alert>
             )}
 

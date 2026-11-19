@@ -12,6 +12,16 @@ import { calculateAllGoalsProgress, generateGoalActions, getGoalsSummary, sugges
 import { getGoalTrackerOptions, getGoalTracking, inferLegacyTracking, resolveGoalValue, trackingId, type GoalTracking } from '@/lib/analytics/goal-tracking';
 import type { Goal } from '@/hooks/use-goals';
 
+/**
+ * Stable empty array.
+ *
+ * `data ?? []` creates a new array on every render, which silently defeats
+ * every `useMemo`/`useEffect` that lists it as a dependency. A shared frozen
+ * constant keeps referential equality (and the warnings) honest.
+ */
+const EMPTY_ROWS: never[] = [];
+
+
 const STATUS_STYLES = {
   completed: 'border-emerald-500/30 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-300',
   'on-track': 'border-primary/20 bg-primary/[0.04] text-primary',
@@ -32,9 +42,9 @@ export function GoalsView() {
   const updateGoal = useUpdateGoal();
   const deleteGoal = useDeleteGoal();
 
-  const goals = goalsQuery.data ?? [];
-  const profiles = profilesQuery.data ?? [];
-  const snapshots = snapshotsQuery.data ?? [];
+  const goals = goalsQuery.data ?? EMPTY_ROWS;
+  const profiles = profilesQuery.data ?? EMPTY_ROWS;
+  const snapshots = snapshotsQuery.data ?? EMPTY_ROWS;
   const trackerOptions = useMemo(() => getGoalTrackerOptions(profiles), [profiles]);
   const [title, setTitle] = useState('');
   const [target, setTarget] = useState('');
