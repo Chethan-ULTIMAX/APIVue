@@ -62,7 +62,9 @@ export function ForgotPasswordPage() {
             {success && (
               <Alert className="animate-enter-sm border-success/25 bg-success/5">
                 <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
-                <AlertDescription>Check your inbox for the reset link.</AlertDescription>
+                <AlertDescription id="reset-sent-notice">
+                  Check your inbox for the reset link.
+                </AlertDescription>
               </Alert>
             )}
             <div className="space-y-2">
@@ -83,7 +85,7 @@ export function ForgotPasswordPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading || success}
-                  aria-describedby={success ? 'reset-sent' : undefined}
+                  aria-describedby={success ? 'reset-sent-notice' : undefined}
                 />
               </div>
             </div>

@@ -90,11 +90,11 @@ const EMPTY_VARIABLES: EnvironmentVariable[] = [];
 const EXAMPLE_URL = 'https://api.github.com/users/octocat';
 
 const METHOD_TONE: Record<HttpMethod, string> = {
-  GET: 'text-emerald-600 dark:text-emerald-400',
-  POST: 'text-amber-600 dark:text-amber-400',
-  PUT: 'text-sky-600 dark:text-sky-400',
+  GET: 'text-success',
+  POST: 'text-warning',
+  PUT: 'text-info',
   PATCH: 'text-violet-600 dark:text-violet-400',
-  DELETE: 'text-rose-600 dark:text-rose-400',
+  DELETE: 'text-destructive',
   HEAD: 'text-muted-foreground',
   OPTIONS: 'text-muted-foreground',
 };
@@ -570,7 +570,7 @@ export function RequestsView() {
                         <button
                           type="button"
                           onClick={() => void handleDeleteSaved(row)}
-                          className="absolute right-1 top-1.5 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+                          className="absolute right-1 top-1.5 rounded p-1 text-muted-foreground opacity-100 transition-opacity hover:text-destructive focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                           aria-label={`Delete ${row.name}`}
                           title="Delete request"
                         >
@@ -682,7 +682,7 @@ export function RequestsView() {
                           <button
                             type="button"
                             onClick={() => setHistory(removeHistoryEntry(entry.id))}
-                            className="absolute right-1 top-1.5 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+                            className="absolute right-1 top-1.5 rounded p-1 text-muted-foreground opacity-100 transition-opacity hover:text-destructive focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                             aria-label="Remove history entry"
                           >
                             <X className="h-3 w-3" />
@@ -868,7 +868,7 @@ export function RequestsView() {
                 </button>
               )}
               {missing.length > 0 ? (
-                <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                <span className="inline-flex items-center gap-1 text-warning">
                   <AlertCircle className="h-3 w-3" />
                   Undefined: {missing.map((name) => `{{${name}}}`).join(', ')}
                 </span>

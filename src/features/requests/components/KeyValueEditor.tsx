@@ -99,7 +99,7 @@ export function KeyValueEditor({
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="h-7 w-7 rounded-md text-muted-foreground/60 opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+            className="h-7 w-7 rounded-md text-muted-foreground/60 opacity-100 transition-opacity hover:text-destructive focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
             onClick={() => remove(row.id)}
             aria-label={`Remove ${keyPlaceholder.toLowerCase()} row ${index + 1}`}
           >

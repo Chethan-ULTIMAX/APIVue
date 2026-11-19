@@ -154,7 +154,7 @@ export function ProfileComparison({ profile, onClose }: ProfileComparisonProps) 
                       valueClassName={
                         syncError
                           ? 'text-destructive'
-                          : 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-success'
                       }
                     />
                     {profile.pinned && (

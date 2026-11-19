@@ -358,7 +358,7 @@ export function CompareView() {
                                       isUnavailable
                                         ? 'text-muted-foreground/50'
                                         : isWinner
-                                          ? 'font-bold text-emerald-600 dark:text-emerald-400'
+                                          ? 'font-bold text-success'
                                           : 'font-bold'
                                     }`}
                                   >

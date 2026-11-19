@@ -320,7 +320,7 @@ export function ProgressView() {
               const accent = getIntegration(t.platform).accent;
               const changeClass =
                 t.change > 0
-                  ? 'text-emerald-600 dark:text-emerald-400'
+                  ? 'text-success'
                   : t.change < 0
                     ? 'text-destructive'
                     : 'text-muted-foreground';

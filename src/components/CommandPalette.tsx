@@ -95,7 +95,9 @@ export function CommandPalette({
                   aria-hidden="true"
                 />
                 <span className="font-medium">{item.label}</span>
-                <span className="ml-auto text-[11px] text-muted-foreground">{item.hint}</span>
+                <span className="ml-auto text-[11px] text-muted-foreground" aria-hidden="true">
+                  {item.hint}
+                </span>
               </CommandItem>
             ))}
           </CommandGroup>
@@ -130,7 +132,7 @@ export function CommandPalette({
           >
             <LogOut className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             <span className="font-medium">Sign out</span>
-            <CommandShortcut>Ends this session</CommandShortcut>
+            <CommandShortcut aria-hidden="true">Ends this session</CommandShortcut>
           </CommandItem>
         </CommandGroup>
       </CommandList>

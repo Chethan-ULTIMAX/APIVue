@@ -155,9 +155,9 @@ export function GitHubContributionImage({ username, joinedAt }: { username: stri
       <div className="border-b border-border bg-gradient-to-r from-emerald-500/10 via-transparent to-transparent p-5 sm:p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-500"><Github className="h-5 w-5" /></div>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-success"><Github className="h-5 w-5" /></div>
             <div>
-              <div className="flex flex-wrap items-center gap-2"><span className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-500">GitHub analytics</span><span className="rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2 py-0.5 text-[10px] font-semibold text-emerald-500">LIVE SOURCE</span></div>
+              <div className="flex flex-wrap items-center gap-2"><span className="text-[11px] font-bold uppercase tracking-[0.18em] text-success">GitHub analytics</span><span className="rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2 py-0.5 text-[10px] font-semibold text-success">LIVE SOURCE</span></div>
               <h3 className="mt-1 text-xl font-black tracking-tight">Contribution activity</h3>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">The real GitHub contribution calendar for <span className="font-semibold text-foreground">@{username}</span>.</p>
             </div>
@@ -170,7 +170,7 @@ export function GitHubContributionImage({ username, joinedAt }: { username: stri
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-border bg-background/60 p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Period</p><p className="mt-1 text-sm font-bold">{RANGES.find((item) => item.id === range)?.label}</p><p className="mt-1 text-[10px] text-muted-foreground">{from} → {to}</p></div>
           <div className="rounded-2xl border border-border bg-background/60 p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Source</p><p className="mt-1 text-sm font-bold">GitHub profile</p><p className="mt-1 text-[10px] text-muted-foreground">Counts and levels come from GitHub.</p></div>
-          <a href={`https://github.com/${encodeURIComponent(username)}`} target="_blank" rel="noreferrer" className="group rounded-2xl border border-border bg-background/60 p-4 transition hover:-translate-y-0.5 hover:border-emerald-500/30"><p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Open profile <ExternalLink className="h-3 w-3" /></p><p className="mt-1 text-sm font-bold group-hover:text-emerald-500">@{username}</p><p className="mt-1 text-[10px] text-muted-foreground">View the original GitHub source.</p></a>
+          <a href={`https://github.com/${encodeURIComponent(username)}`} target="_blank" rel="noreferrer" className="group rounded-2xl border border-border bg-background/60 p-4 transition hover:-translate-y-0.5 hover:border-emerald-500/30"><p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Open profile <ExternalLink className="h-3 w-3" /></p><p className="mt-1 text-sm font-bold group-hover:text-success">@{username}</p><p className="mt-1 text-[10px] text-muted-foreground">View the original GitHub source.</p></a>
         </div>
 
         <div className="mt-5 overflow-x-auto rounded-2xl border border-border bg-background/70 p-4 sm:p-5">

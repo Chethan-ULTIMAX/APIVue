@@ -54,7 +54,7 @@ const groups = [
 const toneClasses: Record<string, string> = {
   blue: 'border-blue-500/25 bg-blue-500/[0.06] text-blue-600 dark:text-blue-400',
   orange: 'border-orange-500/25 bg-orange-500/[0.06] text-orange-600 dark:text-orange-400',
-  emerald: 'border-emerald-500/25 bg-emerald-500/[0.06] text-emerald-600 dark:text-emerald-400',
+  emerald: 'border-emerald-500/25 bg-emerald-500/[0.06] text-success',
   violet: 'border-violet-500/25 bg-violet-500/[0.06] text-violet-600 dark:text-violet-400',
   cyan: 'border-cyan-500/25 bg-cyan-500/[0.06] text-cyan-600 dark:text-cyan-400',
 };
@@ -169,7 +169,7 @@ function DeveloperIdentityHeader({
                     />
                     {integration.name}
                     {isVerified ? (
-                      <Shield className="h-3 w-3 text-emerald-500" />
+                      <Shield className="h-3 w-3 text-success" />
                     ) : (
                       <span className="text-[9px] text-muted-foreground">
                         public
@@ -194,7 +194,7 @@ function DeveloperIdentityHeader({
                 </span>
               )}
               {verifiedCount > 0 && (
-                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                <span className="flex items-center gap-1 text-success">
                   <Shield className="h-3 w-3" />
                   {verifiedCount} verified
                 </span>
@@ -316,7 +316,7 @@ function PlatformOverviewRow({
               variant="outline"
               className={
                 isVerified
-                  ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                  ? 'border-emerald-500/30 text-success'
                   : 'text-muted-foreground'
               }
             >
@@ -356,8 +356,8 @@ function PlatformOverviewRow({
               <span
                 className={
                   delta.delta >= 0
-                    ? 'text-emerald-500'
-                    : 'text-rose-500'
+                    ? 'text-success'
+                    : 'text-destructive'
                 }
               >
                 {delta.delta >= 0 ? '+' : ''}
@@ -449,7 +449,7 @@ function CategoryCard({
               variant="outline"
               className={
                 sourceProfiles.length
-                  ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                  ? 'border-emerald-500/30 text-success'
                   : ''
               }
             >
@@ -559,7 +559,7 @@ function ProfileStatCard({
               <div className="text-right">
                 <p
                   className={`text-sm font-bold tabular-nums ${
-                    delta.delta >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                    delta.delta >= 0 ? 'text-success' : 'text-destructive'
                   }`}
                 >
                   {delta.delta >= 0 ? '+' : ''}
@@ -702,7 +702,7 @@ export function OverviewView() {
           <CardContent className="p-5 sm:p-6">
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
                 <div>
                   <p className="font-semibold">Real connected data</p>
                   <p className="mt-1 text-xs text-muted-foreground">

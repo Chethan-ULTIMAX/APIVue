@@ -23,7 +23,7 @@ export function ProgressAnalytics({ report }: ProgressAnalyticsProps) {
         <div className="flex items-center justify-between gap-4">
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="h-4 w-4 text-emerald-500 dark:text-emerald-300" />
+              <TrendingUp className="h-4 w-4 text-success" />
               Progress analytics
             </CardTitle>
 
@@ -97,7 +97,7 @@ function EmptyProgress() {
   return (
     <div className="flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center">
       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10">
-        <TrendingUp className="h-5 w-5 text-emerald-500 dark:text-emerald-300" />
+        <TrendingUp className="h-5 w-5 text-success" />
       </div>
 
       <h3 className="mt-4 text-sm font-medium">Progress needs a history</h3>
@@ -122,7 +122,7 @@ function ProgressRow({
   return (
     <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/30 p-4">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-        <Icon className="h-4 w-4 text-emerald-500 dark:text-emerald-300" />
+        <Icon className="h-4 w-4 text-success" />
       </div>
 
       <div>

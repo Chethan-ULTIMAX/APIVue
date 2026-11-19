@@ -23,7 +23,7 @@ const EMPTY_ROWS: never[] = [];
 
 
 const STATUS_STYLES = {
-  completed: 'border-emerald-500/30 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-300',
+  completed: 'border-emerald-500/30 bg-emerald-500/[0.06] text-success',
   'on-track': 'border-primary/20 bg-primary/[0.04] text-primary',
   behind: 'border-orange-500/30 bg-orange-500/[0.06] text-orange-700 dark:text-orange-300',
   paused: 'border-muted-foreground/20 bg-muted/50 text-muted-foreground',

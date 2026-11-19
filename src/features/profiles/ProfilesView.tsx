@@ -154,8 +154,8 @@ export function ProfilesView() {
                     <Link to={`/dashboard/profile/${p.id}`} className="block truncate text-sm font-medium hover:text-primary">{displayName}</Link>
                     <p className="truncate font-mono text-[11px] text-muted-foreground">@{p.handle}</p>
                   </div>
-                  <button type="button" onClick={() => pin.mutate({ id: p.id, pinned: !p.pinned })} title={p.pinned ? 'Unpin' : 'Pin to top'} className="text-muted-foreground transition-colors hover:text-amber-500" aria-label={p.pinned ? 'Unpin' : 'Pin'}>
-                    <Star className={`h-3.5 w-3.5 ${p.pinned ? 'fill-amber-500 text-amber-500' : ''}`} />
+                  <button type="button" onClick={() => pin.mutate({ id: p.id, pinned: !p.pinned })} title={p.pinned ? 'Unpin' : 'Pin to top'} className="text-muted-foreground transition-colors hover:text-warning" aria-label={p.pinned ? 'Unpin' : 'Pin'}>
+                    <Star className={`h-3.5 w-3.5 ${p.pinned ? 'fill-warning text-warning' : ''}`} />
                   </button>
                 </div>
 

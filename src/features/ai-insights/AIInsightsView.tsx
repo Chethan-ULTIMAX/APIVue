@@ -62,8 +62,8 @@ const SEVERITY_STYLES: Record<InsightSeverity, SeverityStyle> = {
   warning: {
     container: 'border-amber-500/30 bg-amber-500/5',
     iconBg: 'bg-amber-500/10',
-    icon: 'text-amber-600 dark:text-amber-400',
-    text: 'text-amber-600 dark:text-amber-400',
+    icon: 'text-warning',
+    text: 'text-warning',
   },
   info: {
     container: 'border-blue-500/30 bg-blue-500/5',
@@ -74,8 +74,8 @@ const SEVERITY_STYLES: Record<InsightSeverity, SeverityStyle> = {
   good: {
     container: 'border-emerald-500/30 bg-emerald-500/5',
     iconBg: 'bg-emerald-500/10',
-    icon: 'text-emerald-600 dark:text-emerald-400',
-    text: 'text-emerald-600 dark:text-emerald-400',
+    icon: 'text-success',
+    text: 'text-success',
   },
   great: {
     container: 'border-violet-500/30 bg-violet-500/5',
@@ -174,7 +174,7 @@ const PRIORITY_STYLES: Record<
   },
   2: {
     container: 'border-amber-500/30 bg-amber-500/5',
-    badge: 'border-amber-500/30 text-amber-600 dark:text-amber-400',
+    badge: 'border-amber-500/30 text-warning',
   },
   3: {
     container: 'border-blue-500/30 bg-blue-500/5',
@@ -252,9 +252,9 @@ function scoreTone(score: number): {
 } {
   if (score >= 80)
     return {
-      text: 'text-emerald-600 dark:text-emerald-400',
+      text: 'text-success',
       bg: 'bg-emerald-500/10',
-      ring: 'text-emerald-500',
+      ring: 'text-success',
     };
   if (score >= 60)
     return {
@@ -471,7 +471,7 @@ function AIInsightsEmptyState() {
                   key={item}
                   className="flex items-center gap-2 text-sm text-muted-foreground"
                 >
-                  <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <Check className="h-3.5 w-3.5 text-success" />
                   {item}
                 </div>
               ))}

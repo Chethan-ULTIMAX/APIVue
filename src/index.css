@@ -45,13 +45,13 @@
     --accent-foreground: 258 40% 22%;
 
     /* Status */
-    --destructive: 356 72% 52%;
+    --destructive: 356 74% 42%;
     --destructive-foreground: 0 0% 100%;
-    --success: 154 62% 38%;
+    --success: 154 64% 26%;
     --success-foreground: 0 0% 100%;
-    --warning: 32 88% 46%;
+    --warning: 32 90% 28%;
     --warning-foreground: 0 0% 100%;
-    --info: 199 84% 42%;
+    --info: 199 88% 28%;
     --info-foreground: 0 0% 100%;
 
     /* Lines + focus */
@@ -112,7 +112,7 @@
     --accent: 229 15% 17%;
     --accent-foreground: 220 16% 93%;
 
-    --destructive: 356 76% 62%;
+    --destructive: 356 76% 70%;
     --destructive-foreground: 0 0% 100%;
     --success: 152 56% 52%;
     --success-foreground: 150 40% 8%;

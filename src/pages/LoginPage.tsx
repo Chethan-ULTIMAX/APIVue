@@ -116,7 +116,7 @@ export function LoginPage() {
         {notice ? (
           <Alert className="animate-enter-sm border-success/25 bg-success/5">
             <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
-            <AlertDescription className="text-emerald-800 dark:text-emerald-200">
+            <AlertDescription className="text-success">
               {notice}
             </AlertDescription>
           </Alert>

@@ -118,7 +118,7 @@ function CodeBlock({
           size="icon-sm"
           aria-label={label ?? 'Copy'}
           onClick={onCopy}
-          className="absolute right-2 top-2 h-7 w-7 opacity-0 transition-opacity duration-150 focus-visible:opacity-100 group-hover:opacity-100"
+          className="absolute right-2 top-2 h-7 w-7 opacity-100 transition-opacity duration-150 focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
         >
           <Copy className="h-3.5 w-3.5" />
         </Button>
@@ -286,7 +286,7 @@ export function ResponseViewer({ response, error, loading, onCopy }: ResponseVie
             </p>
           ) : response.isJson ? (
             <>
-              <div className="mb-1.5 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+              <div className="mb-1.5 flex items-center gap-1.5 text-[11px] text-success">
                 <Check className="h-3 w-3" aria-hidden="true" />
                 Valid JSON
                 <span className="ml-auto truncate font-mono text-muted-foreground">
